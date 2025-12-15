@@ -70,5 +70,7 @@ namespace ActivityTracking.Data
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime? UpdatedAt { get; set; }
+
+        public virtual ICollection<ActivityLogFile>? Files { get; set; }
     }
 }

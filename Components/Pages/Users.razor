@@ -107,6 +107,22 @@
                     <option value="Shared">Shared</option>
                 </InputSelect>
             </div>
+            @if (formModel.KomputerType == "Dedicated")
+            {
+                <div class="form-group">
+                    <label>Komputer No (Default)</label>
+                    <InputSelect @bind-Value="formModel.KomputerNo" class="form-control">
+                        <option value="">-- Pilih Komputer --</option>
+                        @if (computers != null)
+                        {
+                            @foreach (var c in computers)
+                            {
+                                <option value="@c.NamaComputer">@c.NamaComputer</option>
+                            }
+                        }
+                    </InputSelect>
+                </div>
+            }
             <div class="form-group">
                 <label>Role *</label>
                 <InputSelect @bind-Value="formModel.Role" class="form-control">
@@ -179,6 +195,7 @@
     private List<MasterJabatan>? jabatans;
     private List<MasterBagian>? bagians;
     private List<MasterUnit>? units;
+    private List<MasterComputer>? computers;
     private string? message;
     private bool isError;
     private ApplicationUser? editingUser;
@@ -200,6 +217,7 @@
         jabatans = await DbContext.MasterJabatans.Where(x => x.IsActive).OrderBy(x => x.NamaJabatan).ToListAsync();
         bagians = await DbContext.MasterBagians.Where(x => x.IsActive).OrderBy(x => x.NamaBagian).ToListAsync();
         units = await DbContext.MasterUnits.Where(x => x.IsActive).OrderBy(x => x.NamaUnit).ToListAsync();
+        computers = await DbContext.MasterComputers.Where(x => x.IsActive).OrderBy(x => x.NamaComputer).ToListAsync();
     }
 
     private void EditUser(ApplicationUser user)
@@ -215,6 +233,7 @@
             Unit = user.Unit,
             TipeKaryawan = user.TipeKaryawan,
             KomputerType = user.KomputerType,
+            KomputerNo = user.KomputerNo,
             Role = user.Role
         };
     }
@@ -237,6 +256,7 @@
             editingUser.Unit = formModel.Unit;
             editingUser.TipeKaryawan = formModel.TipeKaryawan;
             editingUser.KomputerType = formModel.KomputerType;
+            editingUser.KomputerNo = formModel.KomputerType == "Dedicated" ? formModel.KomputerNo : null;
             editingUser.Role = formModel.Role;
 
             var result = await UserManager.UpdateAsync(editingUser);
@@ -274,6 +294,7 @@
                 Unit = formModel.Unit,
                 TipeKaryawan = formModel.TipeKaryawan,
                 KomputerType = formModel.KomputerType,
+                KomputerNo = formModel.KomputerType == "Dedicated" ? formModel.KomputerNo : null,
                 Role = formModel.Role,
                 EmailConfirmed = true
             };
@@ -332,6 +353,7 @@
         public string? Unit { get; set; }
         public string? TipeKaryawan { get; set; }
         public string? KomputerType { get; set; }
+        public string? KomputerNo { get; set; }
         public string Role { get; set; } = "Staff";
     }
 }

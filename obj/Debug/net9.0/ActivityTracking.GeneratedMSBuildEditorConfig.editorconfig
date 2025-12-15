@@ -184,6 +184,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBY3Rpdml0eUlucHV0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/APPS-DEV/ASPNETCORE/ActivityTracking/ActivityTracking/Components/Pages/ActivityList.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBY3Rpdml0eUxpc3QucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/APPS-DEV/ASPNETCORE/ActivityTracking/ActivityTracking/Components/Pages/Admin/MasterData.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxNYXN0ZXJEYXRhLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

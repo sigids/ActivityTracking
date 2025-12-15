@@ -4,6 +4,7 @@ using ActivityTracking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ActivityTracking.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215083928_AddActivityLogFiles")]
+    partial class AddActivityLogFiles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -184,10 +187,6 @@ namespace ActivityTracking.Migrations
                     b.Property<string>("Jabatan")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("KomputerNo")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("KomputerType")
                         .HasMaxLength(20)
@@ -397,59 +396,6 @@ namespace ActivityTracking.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ActivityTracking.Data.MasterComputer", b =>
-                {
-                    b.Property<int>("ComputerID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComputerID"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NamaComputer")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ComputerID");
-
-                    b.ToTable("MasterComputers");
-
-                    b.HasData(
-                        new
-                        {
-                            ComputerID = 1,
-                            IsActive = true,
-                            NamaComputer = "PC-001"
-                        },
-                        new
-                        {
-                            ComputerID = 2,
-                            IsActive = true,
-                            NamaComputer = "PC-002"
-                        },
-                        new
-                        {
-                            ComputerID = 3,
-                            IsActive = true,
-                            NamaComputer = "PC-003"
-                        },
-                        new
-                        {
-                            ComputerID = 4,
-                            IsActive = true,
-                            NamaComputer = "Laptop-001"
-                        },
-                        new
-                        {
-                            ComputerID = 5,
-                            IsActive = true,
-                            NamaComputer = "Laptop-002"
-                        });
-                });
-
             modelBuilder.Entity("ActivityTracking.Data.MasterFrequency", b =>
                 {
                     b.Property<int>("FrequencyID")
@@ -541,47 +487,6 @@ namespace ActivityTracking.Migrations
                             JabatanID = 3,
                             IsActive = true,
                             NamaJabatan = "Manager"
-                        });
-                });
-
-            modelBuilder.Entity("ActivityTracking.Data.MasterPengguna", b =>
-                {
-                    b.Property<int>("PenggunaID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PenggunaID"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NamaPengguna")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("PenggunaID");
-
-                    b.ToTable("MasterPenggunas");
-
-                    b.HasData(
-                        new
-                        {
-                            PenggunaID = 1,
-                            IsActive = true,
-                            NamaPengguna = "Internal"
-                        },
-                        new
-                        {
-                            PenggunaID = 2,
-                            IsActive = true,
-                            NamaPengguna = "Eksternal"
-                        },
-                        new
-                        {
-                            PenggunaID = 3,
-                            IsActive = true,
-                            NamaPengguna = "Pribadi"
                         });
                 });
 

@@ -4,6 +4,8 @@
 @using Microsoft.EntityFrameworkCore
 @using ActivityTracking.Data
 @using System.Security.Claims
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Components.Forms
 
 @attribute [Authorize]
 @rendermode InteractiveServer
@@ -12,6 +14,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
+@inject IWebHostEnvironment Environment
 
 <PageTitle>Input Aktivitas Harian</PageTitle>
 
@@ -26,21 +29,24 @@
     </div>
 }
 
-@if (currentUser != null)
+@if (targetUser != null)
 {
     <div class="card mb-3">
-        <h3>Informasi Karyawan</h3>
+        <h3>Informasi Karyawan @(isEditMode && isAdmin ? "(Mode Edit)" : "")</h3>
         <div class="info-grid">
-            <div class="info-item"><strong>Employee ID:</strong> @currentUser.EmployeeID</div>
-            <div class="info-item"><strong>Nama:</strong> @currentUser.Nama</div>
-            <div class="info-item"><strong>Jabatan:</strong> @currentUser.Jabatan</div>
-            <div class="info-item"><strong>Bagian:</strong> @currentUser.Bagian</div>
-            <div class="info-item"><strong>Unit:</strong> @currentUser.Unit</div>
-            <div class="info-item"><strong>Tipe Karyawan:</strong> @currentUser.TipeKaryawan</div>
+            <div class="info-item"><strong>Employee ID:</strong> @targetUser.EmployeeID</div>
+            <div class="info-item"><strong>Nama:</strong> @targetUser.Nama</div>
+            <div class="info-item"><strong>Jabatan:</strong> @targetUser.Jabatan</div>
+            <div class="info-item"><strong>Bagian:</strong> @targetUser.Bagian</div>
+            <div class="info-item"><strong>Unit:</strong> @targetUser.Unit</div>
+            <div class="info-item"><strong>Tipe Karyawan:</strong> @targetUser.TipeKaryawan</div>
         </div>
         <div class="mt-3">
             <label><strong>Tanggal:</strong></label>
-            <input type="date" @bind="selectedDate" class="form-control" style="max-width: 200px;" />
+            <input type="date" @bind="selectedDate" @bind:after="OnDateChanged" class="form-control" style="max-width: 200px;" disabled="@isEditMode" />
+        </div>
+        <div class="mt-3">
+            <a href="/activity-list" class="btn btn-secondary">Kembali ke Daftar</a>
         </div>
     </div>
 }
@@ -67,6 +73,7 @@
                     <th>Nama Dok</th>
                     <th>Asal Dok</th>
                     <th>Keterangan</th>
+                    <th>Files</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -77,7 +84,18 @@
                     var row = activityRows[index];
                     <tr>
                         <td>@(index + 1)</td>
-                        <td><input type="text" @bind="row.ComputerNo" class="form-control form-control-sm" /></td>
+                        <td>
+                            <select @bind="row.ComputerNo" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (computers != null)
+                                {
+                                    @foreach (var c in computers)
+                                    {
+                                        <option value="@c.NamaComputer">@c.NamaComputer</option>
+                                    }
+                                }
+                            </select>
+                        </td>
                         <td>
                             <select @bind="row.AktivitasID" class="form-control form-control-sm">
                                 <option value="">-- Pilih --</option>
@@ -91,7 +109,18 @@
                             </select>
                         </td>
                         <td><input type="text" @bind="row.Deskripsi" class="form-control form-control-sm" /></td>
-                        <td><input type="text" @bind="row.DigunakanOleh" class="form-control form-control-sm" /></td>
+                        <td>
+                            <select @bind="row.DigunakanOleh" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (penggunas != null)
+                                {
+                                    @foreach (var p in penggunas)
+                                    {
+                                        <option value="@p.NamaPengguna">@p.NamaPengguna</option>
+                                    }
+                                }
+                            </select>
+                        </td>
                         <td><input type="time" value="@row.WaktuMulaiStr" @onchange="@(e => { row.WaktuMulaiStr = e.Value?.ToString(); CalculateDuration(row); })" class="form-control form-control-sm" /></td>
                         <td><input type="time" value="@row.WaktuSelesaiStr" @onchange="@(e => { row.WaktuSelesaiStr = e.Value?.ToString(); CalculateDuration(row); })" class="form-control form-control-sm" /></td>
                         <td><input type="number" @bind="row.DurasiMenit" class="form-control form-control-sm" style="width: 70px;" /></td>
@@ -136,6 +165,13 @@
                         <td><input type="text" @bind="row.AsalDok" class="form-control form-control-sm" /></td>
                         <td><input type="text" @bind="row.Keterangan" class="form-control form-control-sm" /></td>
                         <td>
+                            <InputFile OnChange="@(e => OnFilesSelected(e, index))" multiple class="form-control form-control-sm" style="min-width: 150px;" />
+                            @if (row.SelectedFiles.Any())
+                            {
+                                <small class="text-muted">@row.SelectedFiles.Count file dipilih</small>
+                            }
+                        </td>
+                        <td>
                             <button class="btn btn-danger btn-sm" @onclick="() => RemoveRow(index)">Hapus</button>
                         </td>
                     </tr>
@@ -152,60 +188,195 @@
 
 <div class="card mt-3">
     <h3>Riwayat Aktivitas Hari Ini</h3>
-    <table class="user-table">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Aktivitas</th>
-                <th>Deskripsi</th>
-                <th>Waktu</th>
-                <th>Durasi</th>
-                <th>Metode</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (todayLogs != null && todayLogs.Any())
-            {
-                int no = 1;
-                @foreach (var log in todayLogs)
+    <div class="table-responsive">
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Komputer</th>
+                    <th>Aktivitas</th>
+                    <th>Deskripsi</th>
+                    <th>Digunakan</th>
+                    <th>Waktu Mulai</th>
+                    <th>Waktu Selesai</th>
+                    <th>Durasi</th>
+                    <th>Frekuensi</th>
+                    <th>Metode</th>
+                    <th>Aplikasi</th>
+                    <th>Files</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (todayLogs != null && todayLogs.Any())
+                {
+                    int no = 1;
+                    @foreach (var log in todayLogs)
+                    {
+                        var logId = log.LogID;
+                        var isEditing = editingLogId == logId;
+                        <tr>
+                            <td>@(no++)</td>
+                            @if (isEditing)
+                            {
+                                <td>
+                                    <select @bind="editLog.ComputerNo" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (computers != null)
+                                        {
+                                            @foreach (var c in computers)
+                                            {
+                                                <option value="@c.NamaComputer">@c.NamaComputer</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <select @bind="editLog.AktivitasID" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (activities != null)
+                                        {
+                                            @foreach (var a in activities)
+                                            {
+                                                <option value="@a.AktivitasID">@a.NamaAktivitas</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td><input type="text" @bind="editLog.Deskripsi" class="form-control form-control-sm" /></td>
+                                <td>
+                                    <select @bind="editLog.DigunakanOleh" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (penggunas != null)
+                                        {
+                                            @foreach (var p in penggunas)
+                                            {
+                                                <option value="@p.NamaPengguna">@p.NamaPengguna</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td><input type="time" value="@editLog.WaktuMulaiStr" @onchange="@(e => editLog.WaktuMulaiStr = e.Value?.ToString())" class="form-control form-control-sm" /></td>
+                                <td><input type="time" value="@editLog.WaktuSelesaiStr" @onchange="@(e => editLog.WaktuSelesaiStr = e.Value?.ToString())" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind="editLog.DurasiMenit" class="form-control form-control-sm" style="width: 70px;" /></td>
+                                <td>
+                                    <select @bind="editLog.FrekuensiID" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (frequencies != null)
+                                        {
+                                            @foreach (var f in frequencies)
+                                            {
+                                                <option value="@f.FrequencyID">@f.NamaFrekuensi</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <select @bind="editLog.MetodeKerjaID" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (methods != null)
+                                        {
+                                            @foreach (var m in methods)
+                                            {
+                                                <option value="@m.MethodID">@m.NamaMetode</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <select @bind="editLog.AplikasiID" class="form-control form-control-sm">
+                                        <option value="">-- Pilih --</option>
+                                        @if (applications != null)
+                                        {
+                                            @foreach (var ap in applications)
+                                            {
+                                                <option value="@ap.ApplicationID">@ap.NamaAplikasi</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                            }
+                            else
+                            {
+                                <td>@log.ComputerNo</td>
+                                <td>@log.Aktivitas?.NamaAktivitas</td>
+                                <td>@log.Deskripsi</td>
+                                <td>@log.DigunakanOleh</td>
+                                <td>@log.WaktuMulai?.ToString("HH:mm")</td>
+                                <td>@log.WaktuSelesai?.ToString("HH:mm")</td>
+                                <td>@log.DurasiMenit</td>
+                                <td>@log.Frekuensi?.NamaFrekuensi</td>
+                                <td>@log.MetodeKerja?.NamaMetode</td>
+                                <td>@log.Aplikasi?.NamaAplikasi</td>
+                            }
+                            <td>
+                                @if (log.Files != null && log.Files.Any())
+                                {
+                                    <div class="file-list">
+                                        @foreach (var file in log.Files)
+                                        {
+                                            <div class="file-item">
+                                                <a href="/uploads/@file.FileName" target="_blank" title="@file.OriginalFileName">
+                                                    @TruncateFileName(file.OriginalFileName)
+                                                </a>
+                                                <button type="button" class="btn-delete-file" @onclick="@(() => DeleteFile(file.FileID))" title="Hapus file">x</button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                <div class="mt-1">
+                                    <InputFile OnChange="@(e => OnUploadFilesToLog(e, logId))" multiple class="form-control form-control-sm" style="font-size: 0.75rem;" />
+                                </div>
+                            </td>
+                            <td>
+                                @if (isEditing)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="SaveEditLog">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEditLog">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="@(() => StartEditLog(log))">Edit</button>
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteLog(log.LogID))">Hapus</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
                 {
                     <tr>
-                        <td>@(no++)</td>
-                        <td>@log.Aktivitas?.NamaAktivitas</td>
-                        <td>@log.Deskripsi</td>
-                        <td>@log.WaktuMulai?.ToString("HH:mm") - @log.WaktuSelesai?.ToString("HH:mm")</td>
-                        <td>@log.DurasiMenit menit</td>
-                        <td>@log.MetodeKerja?.NamaMetode</td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteLog(log.LogID)">Hapus</button>
-                        </td>
+                        <td colspan="13" style="text-align: center;">Belum ada aktivitas hari ini</td>
                     </tr>
                 }
-            }
-            else
-            {
-                <tr>
-                    <td colspan="7" style="text-align: center;">Belum ada aktivitas hari ini</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @code {
     private ApplicationUser? currentUser;
+    private ApplicationUser? targetUser;
     private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private List<ActivityRowModel> activityRows = new();
     private List<ActivityLog>? todayLogs;
+    private bool isAdmin;
+    private bool isEditMode;
+    private string? targetUserId;
 
     private List<MasterActivity>? activities;
     private List<MasterFrequency>? frequencies;
     private List<MasterWorkMethod>? methods;
     private List<MasterApplication>? applications;
+    private List<MasterComputer>? computers;
+    private List<MasterPengguna>? penggunas;
 
     private string? message;
     private bool isError;
+
+    // Edit log fields
+    private int? editingLogId;
+    private EditLogModel editLog = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -215,12 +386,36 @@
         if (userId != null)
         {
             currentUser = await UserManager.FindByIdAsync(userId);
+            isAdmin = currentUser?.Role == "Admin";
+        }
+
+        // Parse query parameters
+        var uri = new Uri(NavigationManager.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("date", out var dateStr) && DateOnly.TryParse(dateStr, out var parsedDate))
+        {
+            selectedDate = parsedDate;
+        }
+
+        if (query.TryGetValue("userId", out var userIdParam) && isAdmin)
+        {
+            targetUserId = userIdParam;
+            targetUser = await UserManager.FindByIdAsync(targetUserId!);
+            isEditMode = true;
+        }
+        else
+        {
+            targetUser = currentUser;
+            targetUserId = currentUser?.Id;
         }
 
         activities = await DbContext.MasterActivities.Where(x => x.IsActive).ToListAsync();
         frequencies = await DbContext.MasterFrequencies.Where(x => x.IsActive).ToListAsync();
         methods = await DbContext.MasterWorkMethods.Where(x => x.IsActive).ToListAsync();
         applications = await DbContext.MasterApplications.Where(x => x.IsActive).ToListAsync();
+        computers = await DbContext.MasterComputers.Where(x => x.IsActive).ToListAsync();
+        penggunas = await DbContext.MasterPenggunas.Where(x => x.IsActive).ToListAsync();
 
         AddRow();
         await LoadTodayLogs();
@@ -228,19 +423,30 @@
 
     private async Task LoadTodayLogs()
     {
-        if (currentUser == null) return;
+        if (targetUser == null) return;
         
         todayLogs = await DbContext.ActivityLogs
             .Include(x => x.Aktivitas)
             .Include(x => x.MetodeKerja)
-            .Where(x => x.UserID == currentUser.Id && x.Tanggal == selectedDate)
+            .Include(x => x.Frekuensi)
+            .Include(x => x.Aplikasi)
+            .Include(x => x.Files)
+            .Where(x => x.UserID == targetUser.Id && x.Tanggal == selectedDate)
             .OrderBy(x => x.WaktuMulai)
             .ToListAsync();
     }
 
     private void AddRow()
     {
-        activityRows.Add(new ActivityRowModel());
+        var newRow = new ActivityRowModel();
+        
+        // Set default KomputerNo from user profile if they have Dedicated computer
+        if (targetUser?.KomputerType == "Dedicated" && !string.IsNullOrEmpty(targetUser.KomputerNo))
+        {
+            newRow.ComputerNo = targetUser.KomputerNo;
+        }
+        
+        activityRows.Add(newRow);
     }
 
     private void RemoveRow(int index)
@@ -264,9 +470,14 @@
         }
     }
 
+    private async Task OnDateChanged()
+    {
+        await LoadTodayLogs();
+    }
+
     private async Task SaveActivities()
     {
-        if (currentUser == null)
+        if (targetUser == null)
         {
             message = "User tidak ditemukan";
             isError = true;
@@ -294,7 +505,7 @@
 
             var log = new ActivityLog
             {
-                UserID = currentUser.Id,
+                UserID = targetUser.Id,
                 Tanggal = selectedDate,
                 ComputerNo = row.ComputerNo,
                 AktivitasID = row.AktivitasID,
@@ -314,6 +525,12 @@
             };
 
             DbContext.ActivityLogs.Add(log);
+            await DbContext.SaveChangesAsync();
+
+            if (row.SelectedFiles.Any())
+            {
+                await UploadFilesForLog(log.LogID, row.SelectedFiles);
+            }
         }
 
         await DbContext.SaveChangesAsync();
@@ -328,9 +545,23 @@
 
     private async Task DeleteLog(int logId)
     {
-        var log = await DbContext.ActivityLogs.FindAsync(logId);
+        var log = await DbContext.ActivityLogs
+            .Include(x => x.Files)
+            .FirstOrDefaultAsync(x => x.LogID == logId);
+            
         if (log != null)
         {
+            if (log.Files != null && log.Files.Any())
+            {
+                foreach (var file in log.Files)
+                {
+                    var filePath = Path.Combine(Environment.WebRootPath, "uploads", file.FileName);
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+                }
+            }
             DbContext.ActivityLogs.Remove(log);
             await DbContext.SaveChangesAsync();
             message = "Aktivitas berhasil dihapus";
@@ -339,8 +570,174 @@
         }
     }
 
+    private void OnFilesSelected(InputFileChangeEventArgs e, int rowIndex)
+    {
+        if (rowIndex < activityRows.Count)
+        {
+            activityRows[rowIndex].SelectedFiles = e.GetMultipleFiles(10).ToList();
+        }
+    }
+
+    private async Task OnUploadFilesToLog(InputFileChangeEventArgs e, int logId)
+    {
+        var files = e.GetMultipleFiles(10).ToList();
+        if (files.Any())
+        {
+            await UploadFilesForLog(logId, files);
+            message = $"{files.Count} file berhasil diupload";
+            isError = false;
+            await LoadTodayLogs();
+        }
+    }
+
+    private async Task UploadFilesForLog(int logId, List<IBrowserFile> files)
+    {
+        var uploadsPath = Path.Combine(Environment.WebRootPath, "uploads");
+        
+        foreach (var file in files)
+        {
+            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.Name)}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream);
+
+            var logFile = new ActivityLogFile
+            {
+                LogID = logId,
+                FileName = fileName,
+                OriginalFileName = file.Name,
+                ContentType = file.ContentType,
+                FileSize = file.Size,
+                FilePath = $"/uploads/{fileName}",
+                UploadedAt = DateTime.Now
+            };
+
+            DbContext.ActivityLogFiles.Add(logFile);
+        }
+
+        await DbContext.SaveChangesAsync();
+    }
+
+    private async Task DeleteFile(int fileId)
+    {
+        var file = await DbContext.ActivityLogFiles.FindAsync(fileId);
+        if (file != null)
+        {
+            var filePath = Path.Combine(Environment.WebRootPath, "uploads", file.FileName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            DbContext.ActivityLogFiles.Remove(file);
+            await DbContext.SaveChangesAsync();
+            message = "File berhasil dihapus";
+            isError = false;
+            await LoadTodayLogs();
+        }
+    }
+
+    private string TruncateFileName(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName)) return "";
+        if (fileName.Length <= 35) return fileName;
+        var ext = Path.GetExtension(fileName);
+        var name = Path.GetFileNameWithoutExtension(fileName);
+        return name.Substring(0, Math.Min(30, name.Length)) + "..." + ext;
+    }
+
+    private void StartEditLog(ActivityLog log)
+    {
+        editingLogId = log.LogID;
+        editLog = new EditLogModel
+        {
+            LogID = log.LogID,
+            ComputerNo = log.ComputerNo,
+            AktivitasID = log.AktivitasID,
+            Deskripsi = log.Deskripsi,
+            DigunakanOleh = log.DigunakanOleh,
+            WaktuMulaiStr = log.WaktuMulai?.ToString("HH:mm"),
+            WaktuSelesaiStr = log.WaktuSelesai?.ToString("HH:mm"),
+            DurasiMenit = log.DurasiMenit,
+            FrekuensiID = log.FrekuensiID,
+            MetodeKerjaID = log.MetodeKerjaID,
+            AplikasiID = log.AplikasiID,
+            JenisDok = log.JenisDok,
+            NamaDok = log.NamaDok,
+            AsalDok = log.AsalDok,
+            Keterangan = log.Keterangan
+        };
+    }
+
+    private void CancelEditLog()
+    {
+        editingLogId = null;
+        editLog = new EditLogModel();
+    }
+
+    private async Task SaveEditLog()
+    {
+        if (editingLogId == null) return;
+
+        var log = await DbContext.ActivityLogs.FindAsync(editingLogId);
+        if (log != null)
+        {
+            log.ComputerNo = editLog.ComputerNo;
+            log.AktivitasID = editLog.AktivitasID;
+            log.Deskripsi = editLog.Deskripsi;
+            log.DigunakanOleh = editLog.DigunakanOleh;
+            
+            if (!string.IsNullOrEmpty(editLog.WaktuMulaiStr) && TimeSpan.TryParse(editLog.WaktuMulaiStr, out var mulai))
+                log.WaktuMulai = TimeOnly.FromTimeSpan(mulai);
+            else
+                log.WaktuMulai = null;
+                
+            if (!string.IsNullOrEmpty(editLog.WaktuSelesaiStr) && TimeSpan.TryParse(editLog.WaktuSelesaiStr, out var selesai))
+                log.WaktuSelesai = TimeOnly.FromTimeSpan(selesai);
+            else
+                log.WaktuSelesai = null;
+            
+            log.DurasiMenit = editLog.DurasiMenit;
+            log.FrekuensiID = editLog.FrekuensiID;
+            log.MetodeKerjaID = editLog.MetodeKerjaID;
+            log.AplikasiID = editLog.AplikasiID;
+            log.JenisDok = editLog.JenisDok;
+            log.NamaDok = editLog.NamaDok;
+            log.AsalDok = editLog.AsalDok;
+            log.Keterangan = editLog.Keterangan;
+            log.UpdatedAt = DateTime.Now;
+
+            await DbContext.SaveChangesAsync();
+            message = "Aktivitas berhasil diupdate";
+            isError = false;
+            
+            CancelEditLog();
+            await LoadTodayLogs();
+        }
+    }
+
     private class ActivityRowModel
     {
+        public string? ComputerNo { get; set; }
+        public int? AktivitasID { get; set; }
+        public string? Deskripsi { get; set; }
+        public string? DigunakanOleh { get; set; }
+        public string? WaktuMulaiStr { get; set; }
+        public string? WaktuSelesaiStr { get; set; }
+        public int DurasiMenit { get; set; }
+        public int? FrekuensiID { get; set; }
+        public int? MetodeKerjaID { get; set; }
+        public int? AplikasiID { get; set; }
+        public string? JenisDok { get; set; }
+        public string? NamaDok { get; set; }
+        public string? AsalDok { get; set; }
+        public string? Keterangan { get; set; }
+        public List<IBrowserFile> SelectedFiles { get; set; } = new();
+    }
+
+    private class EditLogModel
+    {
+        public int LogID { get; set; }
         public string? ComputerNo { get; set; }
         public int? AktivitasID { get; set; }
         public string? Deskripsi { get; set; }

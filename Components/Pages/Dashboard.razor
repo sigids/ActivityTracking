@@ -57,6 +57,19 @@
                     }
                 </select>
             </div>
+            <div class="filter-item">
+                <label>Unit:</label>
+                <select @bind="selectedUnit" class="form-control">
+                    <option value="">-- Semua Unit --</option>
+                    @if (unitList != null)
+                    {
+                        @foreach (var u in unitList)
+                        {
+                            <option value="@u">@u</option>
+                        }
+                    }
+                </select>
+            </div>
         }
         <div class="filter-item">
             <button class="btn btn-primary" @onclick="LoadData">Tampilkan</button>
@@ -174,11 +187,13 @@
     private DateOnly endDate = DateOnly.FromDateTime(DateTime.Today);
     private string? selectedUserId;
     private string? selectedBagian;
+    private string? selectedUnit;
     private bool isAdmin;
     private ApplicationUser? currentUser;
 
     private List<ApplicationUser>? users;
     private List<string>? bagianList;
+    private List<string>? unitList;
 
     // Summary Data
     private double totalWaktuAktivitas;
@@ -217,6 +232,7 @@
         {
             users = await DbContext.Users.Where(u => u.Role == "Staff").ToListAsync();
             bagianList = await DbContext.Users.Where(u => u.Bagian != null).Select(u => u.Bagian!).Distinct().ToListAsync();
+            unitList = await DbContext.Users.Where(u => u.Unit != null).Select(u => u.Unit!).Distinct().ToListAsync();
         }
 
         await LoadData();
@@ -245,6 +261,10 @@
             if (!string.IsNullOrEmpty(selectedBagian))
             {
                 query = query.Where(x => x.User != null && x.User.Bagian == selectedBagian);
+            }
+            if (!string.IsNullOrEmpty(selectedUnit))
+            {
+                query = query.Where(x => x.User != null && x.User.Unit == selectedUnit);
             }
         }
 

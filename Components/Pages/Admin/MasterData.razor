@@ -30,6 +30,8 @@
     <button class="tab-btn @(activeTab == "jabatans" ? "active" : "")" @onclick="@(() => SetTab("jabatans"))">Jabatan</button>
     <button class="tab-btn @(activeTab == "bagians" ? "active" : "")" @onclick="@(() => SetTab("bagians"))">Bagian</button>
     <button class="tab-btn @(activeTab == "units" ? "active" : "")" @onclick="@(() => SetTab("units"))">Unit</button>
+    <button class="tab-btn @(activeTab == "computers" ? "active" : "")" @onclick="@(() => SetTab("computers"))">Komputer</button>
+    <button class="tab-btn @(activeTab == "penggunas" ? "active" : "")" @onclick="@(() => SetTab("penggunas"))">Digunakan Oleh</button>
 </div>
 
 <div class="card">
@@ -390,6 +392,108 @@
             </tbody>
         </table>
     }
+    else if (activeTab == "computers")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newComputerName" placeholder="Nama Komputer Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddComputer">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Komputer</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (computers != null)
+                {
+                    @foreach (var item in computers)
+                    {
+                        <tr>
+                            <td>@item.ComputerID</td>
+                            <td>
+                                @if (editingComputerId == item.ComputerID)
+                                {
+                                    <input type="text" @bind="editComputerName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaComputer
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingComputerId == item.ComputerID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveComputer(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditComputer(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleComputerStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "penggunas")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newPenggunaName" placeholder="Nama Pengguna Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddPengguna">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Digunakan Oleh</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (penggunas != null)
+                {
+                    @foreach (var item in penggunas)
+                    {
+                        <tr>
+                            <td>@item.PenggunaID</td>
+                            <td>
+                                @if (editingPenggunaId == item.PenggunaID)
+                                {
+                                    <input type="text" @bind="editPenggunaName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaPengguna
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingPenggunaId == item.PenggunaID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SavePengguna(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditPengguna(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => TogglePenggunaStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 @code {
@@ -404,6 +508,8 @@
     private List<MasterJabatan>? jabatans;
     private List<MasterBagian>? bagians;
     private List<MasterUnit>? units;
+    private List<MasterComputer>? computers;
+    private List<MasterPengguna>? penggunas;
 
     private string newActivityName = "";
     private string newFrequencyName = "";
@@ -412,6 +518,8 @@
     private string newJabatanName = "";
     private string newBagianName = "";
     private string newUnitName = "";
+    private string newComputerName = "";
+    private string newPenggunaName = "";
 
     private int? editingActivityId;
     private int? editingFrequencyId;
@@ -420,6 +528,8 @@
     private int? editingJabatanId;
     private int? editingBagianId;
     private int? editingUnitId;
+    private int? editingComputerId;
+    private int? editingPenggunaId;
 
     private string editActivityName = "";
     private string editFrequencyName = "";
@@ -428,6 +538,8 @@
     private string editJabatanName = "";
     private string editBagianName = "";
     private string editUnitName = "";
+    private string editComputerName = "";
+    private string editPenggunaName = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -443,6 +555,8 @@
         jabatans = await DbContext.MasterJabatans.OrderBy(x => x.JabatanID).ToListAsync();
         bagians = await DbContext.MasterBagians.OrderBy(x => x.BagianID).ToListAsync();
         units = await DbContext.MasterUnits.OrderBy(x => x.UnitID).ToListAsync();
+        computers = await DbContext.MasterComputers.OrderBy(x => x.ComputerID).ToListAsync();
+        penggunas = await DbContext.MasterPenggunas.OrderBy(x => x.PenggunaID).ToListAsync();
     }
 
     private void SetTab(string tab)
@@ -460,6 +574,8 @@
         editingJabatanId = null;
         editingBagianId = null;
         editingUnitId = null;
+        editingComputerId = null;
+        editingPenggunaId = null;
     }
 
     // Activities
@@ -704,6 +820,76 @@
         item.IsActive = !item.IsActive;
         await DbContext.SaveChangesAsync();
         message = $"Status unit berhasil diubah";
+        isError = false;
+    }
+
+    // Computers
+    private async Task AddComputer()
+    {
+        if (string.IsNullOrWhiteSpace(newComputerName)) return;
+        DbContext.MasterComputers.Add(new MasterComputer { NamaComputer = newComputerName });
+        await DbContext.SaveChangesAsync();
+        newComputerName = "";
+        message = "Komputer berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditComputer(MasterComputer item)
+    {
+        editingComputerId = item.ComputerID;
+        editComputerName = item.NamaComputer;
+    }
+
+    private async Task SaveComputer(MasterComputer item)
+    {
+        item.NamaComputer = editComputerName;
+        await DbContext.SaveChangesAsync();
+        editingComputerId = null;
+        message = "Komputer berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleComputerStatus(MasterComputer item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status komputer berhasil diubah";
+        isError = false;
+    }
+
+    // Penggunas
+    private async Task AddPengguna()
+    {
+        if (string.IsNullOrWhiteSpace(newPenggunaName)) return;
+        DbContext.MasterPenggunas.Add(new MasterPengguna { NamaPengguna = newPenggunaName });
+        await DbContext.SaveChangesAsync();
+        newPenggunaName = "";
+        message = "Pengguna berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditPengguna(MasterPengguna item)
+    {
+        editingPenggunaId = item.PenggunaID;
+        editPenggunaName = item.NamaPengguna;
+    }
+
+    private async Task SavePengguna(MasterPengguna item)
+    {
+        item.NamaPengguna = editPenggunaName;
+        await DbContext.SaveChangesAsync();
+        editingPenggunaId = null;
+        message = "Pengguna berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task TogglePenggunaStatus(MasterPengguna item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status pengguna berhasil diubah";
         isError = false;
     }
 }

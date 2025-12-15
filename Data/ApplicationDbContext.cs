@@ -12,7 +12,10 @@ namespace ActivityTracking.Data
         public DbSet<MasterJabatan> MasterJabatans { get; set; }
         public DbSet<MasterBagian> MasterBagians { get; set; }
         public DbSet<MasterUnit> MasterUnits { get; set; }
+        public DbSet<MasterComputer> MasterComputers { get; set; }
+        public DbSet<MasterPengguna> MasterPenggunas { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
+        public DbSet<ActivityLogFile> ActivityLogFiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -66,6 +69,20 @@ namespace ActivityTracking.Data
                 new MasterUnit { UnitID = 1, NamaUnit = "Unit A" },
                 new MasterUnit { UnitID = 2, NamaUnit = "Unit B" },
                 new MasterUnit { UnitID = 3, NamaUnit = "Unit C" }
+            );
+
+            builder.Entity<MasterComputer>().HasData(
+                new MasterComputer { ComputerID = 1, NamaComputer = "PC-001" },
+                new MasterComputer { ComputerID = 2, NamaComputer = "PC-002" },
+                new MasterComputer { ComputerID = 3, NamaComputer = "PC-003" },
+                new MasterComputer { ComputerID = 4, NamaComputer = "Laptop-001" },
+                new MasterComputer { ComputerID = 5, NamaComputer = "Laptop-002" }
+            );
+
+            builder.Entity<MasterPengguna>().HasData(
+                new MasterPengguna { PenggunaID = 1, NamaPengguna = "Internal" },
+                new MasterPengguna { PenggunaID = 2, NamaPengguna = "Eksternal" },
+                new MasterPengguna { PenggunaID = 3, NamaPengguna = "Pribadi" }
             );
         }
     }

@@ -26,6 +26,9 @@ namespace ActivityTracking.Data
         [MaxLength(20)]
         public string? KomputerType { get; set; } // Dedicated, Shared
 
+        [MaxLength(50)]
+        public string? KomputerNo { get; set; } // Default computer for Dedicated users
+
         [MaxLength(20)]
         public string Role { get; set; } = "Staff"; // Admin, Staff
 

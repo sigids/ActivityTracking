@@ -1,0 +1,250 @@
+@page "/activity-list"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+@using System.Security.Claims
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Daftar Aktivitas</PageTitle>
+
+<div class="page-header">
+    <h1>Daftar Aktivitas</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        @message
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="toolbar">
+        <button class="btn btn-primary" @onclick="TambahAktivitas">+ Tambah Aktivitas</button>
+        <div class="search-box">
+            <input type="text" @bind="searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" placeholder="Cari..." class="form-control" />
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Tanggal</th>
+                    @if (isAdmin)
+                    {
+                        <th>Employee ID</th>
+                        <th>Nama</th>
+                        <th>Bagian</th>
+                    }
+                    <th>Jumlah Aktivitas</th>
+                    <th>Total Durasi</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (pagedData != null && pagedData.Any())
+                {
+                    int no = (currentPage - 1) * pageSize + 1;
+                    @foreach (var item in pagedData)
+                    {
+                        <tr>
+                            <td>@(no++)</td>
+                            <td>@item.Tanggal.ToString("dd/MM/yyyy")</td>
+                            @if (isAdmin)
+                            {
+                                <td>@item.EmployeeID</td>
+                                <td>@item.Nama</td>
+                                <td>@item.Bagian</td>
+                            }
+                            <td>@item.JumlahAktivitas</td>
+                            <td>@item.TotalDurasi menit</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" @onclick="@(() => EditAktivitas(item.Tanggal, item.UserID))">Edit</button>
+                                @if (isAdmin)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteAktivitas(item.Tanggal, item.UserID))">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="@(isAdmin ? 8 : 5)" style="text-align: center; color: #666;">Tidak ada data aktivitas</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="pagination">
+            <button class="btn btn-sm" disabled="@(currentPage == 1)" @onclick="@(() => GoToPage(1))">Pertama</button>
+            <button class="btn btn-sm" disabled="@(currentPage == 1)" @onclick="@(() => GoToPage(currentPage - 1))">Prev</button>
+            <span class="page-info">Halaman @currentPage dari @totalPages (@totalRecords data)</span>
+            <button class="btn btn-sm" disabled="@(currentPage == totalPages)" @onclick="@(() => GoToPage(currentPage + 1))">Next</button>
+            <button class="btn btn-sm" disabled="@(currentPage == totalPages)" @onclick="@(() => GoToPage(totalPages))">Akhir</button>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? currentUser;
+    private bool isAdmin;
+    private string? message;
+    private bool isError;
+    private string searchTerm = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalRecords;
+    private int totalPages;
+
+    private List<ActivitySummary>? allData;
+    private List<ActivitySummary>? pagedData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            currentUser = await UserManager.FindByIdAsync(userId);
+            isAdmin = currentUser?.Role == "Admin";
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IQueryable<ActivityLog> query = DbContext.ActivityLogs.Include(x => x.User);
+
+        if (!isAdmin && currentUser != null)
+        {
+            query = query.Where(x => x.UserID == currentUser.Id);
+        }
+
+        var grouped = await query
+            .GroupBy(x => new { x.UserID, x.Tanggal, x.User!.EmployeeID, x.User.Nama, x.User.Bagian })
+            .Select(g => new ActivitySummary
+            {
+                UserID = g.Key.UserID,
+                Tanggal = g.Key.Tanggal,
+                EmployeeID = g.Key.EmployeeID ?? "",
+                Nama = g.Key.Nama ?? "",
+                Bagian = g.Key.Bagian ?? "",
+                JumlahAktivitas = g.Count(),
+                TotalDurasi = g.Sum(x => x.DurasiMenit)
+            })
+            .OrderByDescending(x => x.Tanggal)
+            .ThenBy(x => x.Nama)
+            .ToListAsync();
+
+        allData = grouped;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (allData == null) return;
+
+        var filtered = allData.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.ToLower();
+            filtered = filtered.Where(x =>
+                x.Tanggal.ToString("dd/MM/yyyy").Contains(term) ||
+                x.EmployeeID.ToLower().Contains(term) ||
+                x.Nama.ToLower().Contains(term) ||
+                x.Bagian.ToLower().Contains(term));
+        }
+
+        var filteredList = filtered.ToList();
+        totalRecords = filteredList.Count;
+        totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+        if (totalPages == 0) totalPages = 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        pagedData = filteredList
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+    }
+
+    private void OnSearchChanged()
+    {
+        currentPage = 1;
+        ApplyFilter();
+    }
+
+    private void GoToPage(int page)
+    {
+        currentPage = page;
+        ApplyFilter();
+    }
+
+    private async Task TambahAktivitas()
+    {
+        if (currentUser == null) return;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        NavigationManager.NavigateTo($"/activity-input?date={today:yyyy-MM-dd}");
+        await Task.CompletedTask;
+    }
+
+    private void EditAktivitas(DateOnly tanggal, string userId)
+    {
+        if (isAdmin)
+        {
+            NavigationManager.NavigateTo($"/activity-input?date={tanggal:yyyy-MM-dd}&userId={userId}");
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/activity-input?date={tanggal:yyyy-MM-dd}");
+        }
+    }
+
+    private async Task DeleteAktivitas(DateOnly tanggal, string userId)
+    {
+        var logs = await DbContext.ActivityLogs
+            .Where(x => x.UserID == userId && x.Tanggal == tanggal)
+            .ToListAsync();
+
+        if (logs.Any())
+        {
+            DbContext.ActivityLogs.RemoveRange(logs);
+            await DbContext.SaveChangesAsync();
+            message = $"Aktivitas tanggal {tanggal:dd/MM/yyyy} berhasil dihapus";
+            isError = false;
+            await LoadData();
+        }
+    }
+
+    public class ActivitySummary
+    {
+        public string UserID { get; set; } = "";
+        public DateOnly Tanggal { get; set; }
+        public string EmployeeID { get; set; } = "";
+        public string Nama { get; set; } = "";
+        public string Bagian { get; set; } = "";
+        public int JumlahAktivitas { get; set; }
+        public int TotalDurasi { get; set; }
+    }
+}
