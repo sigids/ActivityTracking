@@ -1,0 +1,709 @@
+@page "/admin/master-data"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>Master Data Management</PageTitle>
+
+<div class="page-header">
+    <h1>Master Data Management</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        @message
+    </div>
+}
+
+<div class="tabs">
+    <button class="tab-btn @(activeTab == "activities" ? "active" : "")" @onclick="@(() => SetTab("activities"))">Aktivitas</button>
+    <button class="tab-btn @(activeTab == "frequencies" ? "active" : "")" @onclick="@(() => SetTab("frequencies"))">Frekuensi</button>
+    <button class="tab-btn @(activeTab == "methods" ? "active" : "")" @onclick="@(() => SetTab("methods"))">Metode Kerja</button>
+    <button class="tab-btn @(activeTab == "applications" ? "active" : "")" @onclick="@(() => SetTab("applications"))">Aplikasi</button>
+    <button class="tab-btn @(activeTab == "jabatans" ? "active" : "")" @onclick="@(() => SetTab("jabatans"))">Jabatan</button>
+    <button class="tab-btn @(activeTab == "bagians" ? "active" : "")" @onclick="@(() => SetTab("bagians"))">Bagian</button>
+    <button class="tab-btn @(activeTab == "units" ? "active" : "")" @onclick="@(() => SetTab("units"))">Unit</button>
+</div>
+
+<div class="card">
+    @if (activeTab == "activities")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newActivityName" placeholder="Nama Aktivitas Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddActivity">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Aktivitas</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (activities != null)
+                {
+                    @foreach (var item in activities)
+                    {
+                        <tr>
+                            <td>@item.AktivitasID</td>
+                            <td>
+                                @if (editingActivityId == item.AktivitasID)
+                                {
+                                    <input type="text" @bind="editActivityName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaAktivitas
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingActivityId == item.AktivitasID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveActivity(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditActivity(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleActivityStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "frequencies")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newFrequencyName" placeholder="Nama Frekuensi Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddFrequency">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Frekuensi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (frequencies != null)
+                {
+                    @foreach (var item in frequencies)
+                    {
+                        <tr>
+                            <td>@item.FrequencyID</td>
+                            <td>
+                                @if (editingFrequencyId == item.FrequencyID)
+                                {
+                                    <input type="text" @bind="editFrequencyName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaFrekuensi
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingFrequencyId == item.FrequencyID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveFrequency(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditFrequency(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleFrequencyStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "methods")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newMethodName" placeholder="Nama Metode Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddMethod">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Metode</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (methods != null)
+                {
+                    @foreach (var item in methods)
+                    {
+                        <tr>
+                            <td>@item.MethodID</td>
+                            <td>
+                                @if (editingMethodId == item.MethodID)
+                                {
+                                    <input type="text" @bind="editMethodName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaMetode
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingMethodId == item.MethodID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveMethod(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditMethod(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleMethodStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "applications")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newAppName" placeholder="Nama Aplikasi Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddApplication">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Aplikasi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (applications != null)
+                {
+                    @foreach (var item in applications)
+                    {
+                        <tr>
+                            <td>@item.ApplicationID</td>
+                            <td>
+                                @if (editingAppId == item.ApplicationID)
+                                {
+                                    <input type="text" @bind="editAppName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaAplikasi
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingAppId == item.ApplicationID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveApplication(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditApplication(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleAppStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "jabatans")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newJabatanName" placeholder="Nama Jabatan Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddJabatan">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Jabatan</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (jabatans != null)
+                {
+                    @foreach (var item in jabatans)
+                    {
+                        <tr>
+                            <td>@item.JabatanID</td>
+                            <td>
+                                @if (editingJabatanId == item.JabatanID)
+                                {
+                                    <input type="text" @bind="editJabatanName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaJabatan
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingJabatanId == item.JabatanID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveJabatan(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditJabatan(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleJabatanStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "bagians")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newBagianName" placeholder="Nama Bagian Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddBagian">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Bagian</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (bagians != null)
+                {
+                    @foreach (var item in bagians)
+                    {
+                        <tr>
+                            <td>@item.BagianID</td>
+                            <td>
+                                @if (editingBagianId == item.BagianID)
+                                {
+                                    <input type="text" @bind="editBagianName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaBagian
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingBagianId == item.BagianID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveBagian(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditBagian(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleBagianStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "units")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newUnitName" placeholder="Nama Unit Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddUnit">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Unit</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (units != null)
+                {
+                    @foreach (var item in units)
+                    {
+                        <tr>
+                            <td>@item.UnitID</td>
+                            <td>
+                                @if (editingUnitId == item.UnitID)
+                                {
+                                    <input type="text" @bind="editUnitName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaUnit
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingUnitId == item.UnitID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveUnit(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditUnit(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleUnitStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private string activeTab = "activities";
+    private string? message;
+    private bool isError;
+
+    private List<MasterActivity>? activities;
+    private List<MasterFrequency>? frequencies;
+    private List<MasterWorkMethod>? methods;
+    private List<MasterApplication>? applications;
+    private List<MasterJabatan>? jabatans;
+    private List<MasterBagian>? bagians;
+    private List<MasterUnit>? units;
+
+    private string newActivityName = "";
+    private string newFrequencyName = "";
+    private string newMethodName = "";
+    private string newAppName = "";
+    private string newJabatanName = "";
+    private string newBagianName = "";
+    private string newUnitName = "";
+
+    private int? editingActivityId;
+    private int? editingFrequencyId;
+    private int? editingMethodId;
+    private int? editingAppId;
+    private int? editingJabatanId;
+    private int? editingBagianId;
+    private int? editingUnitId;
+
+    private string editActivityName = "";
+    private string editFrequencyName = "";
+    private string editMethodName = "";
+    private string editAppName = "";
+    private string editJabatanName = "";
+    private string editBagianName = "";
+    private string editUnitName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllData();
+    }
+
+    private async Task LoadAllData()
+    {
+        activities = await DbContext.MasterActivities.OrderBy(x => x.AktivitasID).ToListAsync();
+        frequencies = await DbContext.MasterFrequencies.OrderBy(x => x.FrequencyID).ToListAsync();
+        methods = await DbContext.MasterWorkMethods.OrderBy(x => x.MethodID).ToListAsync();
+        applications = await DbContext.MasterApplications.OrderBy(x => x.ApplicationID).ToListAsync();
+        jabatans = await DbContext.MasterJabatans.OrderBy(x => x.JabatanID).ToListAsync();
+        bagians = await DbContext.MasterBagians.OrderBy(x => x.BagianID).ToListAsync();
+        units = await DbContext.MasterUnits.OrderBy(x => x.UnitID).ToListAsync();
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+        CancelEdit();
+    }
+
+    private void CancelEdit()
+    {
+        editingActivityId = null;
+        editingFrequencyId = null;
+        editingMethodId = null;
+        editingAppId = null;
+        editingJabatanId = null;
+        editingBagianId = null;
+        editingUnitId = null;
+    }
+
+    // Activities
+    private async Task AddActivity()
+    {
+        if (string.IsNullOrWhiteSpace(newActivityName)) return;
+        DbContext.MasterActivities.Add(new MasterActivity { NamaAktivitas = newActivityName });
+        await DbContext.SaveChangesAsync();
+        newActivityName = "";
+        message = "Aktivitas berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditActivity(MasterActivity item)
+    {
+        editingActivityId = item.AktivitasID;
+        editActivityName = item.NamaAktivitas;
+    }
+
+    private async Task SaveActivity(MasterActivity item)
+    {
+        item.NamaAktivitas = editActivityName;
+        await DbContext.SaveChangesAsync();
+        editingActivityId = null;
+        message = "Aktivitas berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleActivityStatus(MasterActivity item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status aktivitas berhasil diubah";
+        isError = false;
+    }
+
+    // Frequencies
+    private async Task AddFrequency()
+    {
+        if (string.IsNullOrWhiteSpace(newFrequencyName)) return;
+        DbContext.MasterFrequencies.Add(new MasterFrequency { NamaFrekuensi = newFrequencyName });
+        await DbContext.SaveChangesAsync();
+        newFrequencyName = "";
+        message = "Frekuensi berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditFrequency(MasterFrequency item)
+    {
+        editingFrequencyId = item.FrequencyID;
+        editFrequencyName = item.NamaFrekuensi;
+    }
+
+    private async Task SaveFrequency(MasterFrequency item)
+    {
+        item.NamaFrekuensi = editFrequencyName;
+        await DbContext.SaveChangesAsync();
+        editingFrequencyId = null;
+        message = "Frekuensi berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleFrequencyStatus(MasterFrequency item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status frekuensi berhasil diubah";
+        isError = false;
+    }
+
+    // Methods
+    private async Task AddMethod()
+    {
+        if (string.IsNullOrWhiteSpace(newMethodName)) return;
+        DbContext.MasterWorkMethods.Add(new MasterWorkMethod { NamaMetode = newMethodName });
+        await DbContext.SaveChangesAsync();
+        newMethodName = "";
+        message = "Metode kerja berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditMethod(MasterWorkMethod item)
+    {
+        editingMethodId = item.MethodID;
+        editMethodName = item.NamaMetode;
+    }
+
+    private async Task SaveMethod(MasterWorkMethod item)
+    {
+        item.NamaMetode = editMethodName;
+        await DbContext.SaveChangesAsync();
+        editingMethodId = null;
+        message = "Metode kerja berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleMethodStatus(MasterWorkMethod item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status metode kerja berhasil diubah";
+        isError = false;
+    }
+
+    // Applications
+    private async Task AddApplication()
+    {
+        if (string.IsNullOrWhiteSpace(newAppName)) return;
+        DbContext.MasterApplications.Add(new MasterApplication { NamaAplikasi = newAppName });
+        await DbContext.SaveChangesAsync();
+        newAppName = "";
+        message = "Aplikasi berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditApplication(MasterApplication item)
+    {
+        editingAppId = item.ApplicationID;
+        editAppName = item.NamaAplikasi;
+    }
+
+    private async Task SaveApplication(MasterApplication item)
+    {
+        item.NamaAplikasi = editAppName;
+        await DbContext.SaveChangesAsync();
+        editingAppId = null;
+        message = "Aplikasi berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleAppStatus(MasterApplication item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status aplikasi berhasil diubah";
+        isError = false;
+    }
+
+    // Jabatans
+    private async Task AddJabatan()
+    {
+        if (string.IsNullOrWhiteSpace(newJabatanName)) return;
+        DbContext.MasterJabatans.Add(new MasterJabatan { NamaJabatan = newJabatanName });
+        await DbContext.SaveChangesAsync();
+        newJabatanName = "";
+        message = "Jabatan berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditJabatan(MasterJabatan item)
+    {
+        editingJabatanId = item.JabatanID;
+        editJabatanName = item.NamaJabatan;
+    }
+
+    private async Task SaveJabatan(MasterJabatan item)
+    {
+        item.NamaJabatan = editJabatanName;
+        await DbContext.SaveChangesAsync();
+        editingJabatanId = null;
+        message = "Jabatan berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleJabatanStatus(MasterJabatan item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status jabatan berhasil diubah";
+        isError = false;
+    }
+
+    // Bagians
+    private async Task AddBagian()
+    {
+        if (string.IsNullOrWhiteSpace(newBagianName)) return;
+        DbContext.MasterBagians.Add(new MasterBagian { NamaBagian = newBagianName });
+        await DbContext.SaveChangesAsync();
+        newBagianName = "";
+        message = "Bagian berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditBagian(MasterBagian item)
+    {
+        editingBagianId = item.BagianID;
+        editBagianName = item.NamaBagian;
+    }
+
+    private async Task SaveBagian(MasterBagian item)
+    {
+        item.NamaBagian = editBagianName;
+        await DbContext.SaveChangesAsync();
+        editingBagianId = null;
+        message = "Bagian berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleBagianStatus(MasterBagian item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status bagian berhasil diubah";
+        isError = false;
+    }
+
+    // Units
+    private async Task AddUnit()
+    {
+        if (string.IsNullOrWhiteSpace(newUnitName)) return;
+        DbContext.MasterUnits.Add(new MasterUnit { NamaUnit = newUnitName });
+        await DbContext.SaveChangesAsync();
+        newUnitName = "";
+        message = "Unit berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditUnit(MasterUnit item)
+    {
+        editingUnitId = item.UnitID;
+        editUnitName = item.NamaUnit;
+    }
+
+    private async Task SaveUnit(MasterUnit item)
+    {
+        item.NamaUnit = editUnitName;
+        await DbContext.SaveChangesAsync();
+        editingUnitId = null;
+        message = "Unit berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleUnitStatus(MasterUnit item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status unit berhasil diubah";
+        isError = false;
+    }
+}

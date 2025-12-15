@@ -1,0 +1,4 @@
+wwwroot\app.css
+wwwroot\js\sidebar.js
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\wwwroot\app.css
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\wwwroot\js\sidebar.js

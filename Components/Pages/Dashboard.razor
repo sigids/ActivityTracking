@@ -1,0 +1,358 @@
+@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+@using System.Security.Claims
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Dashboard - Analisis Beban Kerja</PageTitle>
+
+<div class="page-header">
+    <h1>Dashboard Analisis Beban Kerja</h1>
+</div>
+
+<div class="card mb-3">
+    <h3>Filter</h3>
+    <div class="filter-grid">
+        <div class="filter-item">
+            <label>Dari Tanggal:</label>
+            <input type="date" @bind="startDate" class="form-control" />
+        </div>
+        <div class="filter-item">
+            <label>Sampai Tanggal:</label>
+            <input type="date" @bind="endDate" class="form-control" />
+        </div>
+        @if (isAdmin)
+        {
+            <div class="filter-item">
+                <label>Staf:</label>
+                <select @bind="selectedUserId" class="form-control">
+                    <option value="">-- Semua Staf --</option>
+                    @if (users != null)
+                    {
+                        @foreach (var u in users)
+                        {
+                            <option value="@u.Id">@u.Nama (@u.EmployeeID)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Bagian:</label>
+                <select @bind="selectedBagian" class="form-control">
+                    <option value="">-- Semua Bagian --</option>
+                    @if (bagianList != null)
+                    {
+                        @foreach (var b in bagianList)
+                        {
+                            <option value="@b">@b</option>
+                        }
+                    }
+                </select>
+            </div>
+        }
+        <div class="filter-item">
+            <button class="btn btn-primary" @onclick="LoadData">Tampilkan</button>
+        </div>
+    </div>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-value">@totalWaktuAktivitas.ToString("F1") jam</div>
+        <div class="kpi-label">Total Waktu Aktivitas</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">@totalAktivitas</div>
+        <div class="kpi-label">Total Aktivitas</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">@totalAktivitasBerulang</div>
+        <div class="kpi-label">Aktivitas Berulang</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">@totalAktivitasKomputerisasi</div>
+        <div class="kpi-label">Aktivitas Komputerisasi</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">@totalAktivitasManual</div>
+        <div class="kpi-label">Aktivitas Manual</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">@aktivitasPalingBanyak</div>
+        <div class="kpi-label">Aktivitas Paling Banyak</div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <h3>KPI (Key Performance Indicators)</h3>
+    <div class="kpi-detail-grid">
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 1: % Waktu Efektif</div>
+            <div class="kpi-big-value @(kpi1WaktuEfektif >= 80 ? "text-success" : kpi1WaktuEfektif >= 60 ? "text-warning" : "text-danger")">
+                @kpi1WaktuEfektif.ToString("F1")%
+            </div>
+            <div class="kpi-desc">Total Waktu Aktivitas / Total Jam Kerja</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 2: Rasio Manual / Komputerisasi</div>
+            <div class="kpi-big-value">@kpi2RasioManualKomputerisasi.ToString("F1")%</div>
+            <div class="kpi-desc">Aktivitas Manual / Aktivitas Komputerisasi</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 3: % Aktivitas Berulang</div>
+            <div class="kpi-big-value">@kpi3AktivitasBerulang.ToString("F1")%</div>
+            <div class="kpi-desc">Aktivitas Berulang / Total Aktivitas</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 4: % Pembuatan Laporan</div>
+            <div class="kpi-big-value">@kpi4PembuatanLaporan.ToString("F1")%</div>
+            <div class="kpi-desc">Aktivitas 'Laporan Data' / Total</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 5: % Pemanfaatan Komputer</div>
+            <div class="kpi-big-value @(kpi5PemanfaatanKomputer >= 70 ? "text-success" : kpi5PemanfaatanKomputer >= 50 ? "text-warning" : "text-danger")">
+                @kpi5PemanfaatanKomputer.ToString("F1")%
+            </div>
+            <div class="kpi-desc">Waktu Aktivitas / Waktu PC Tersedia</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 6: Variasi Beban Kerja</div>
+            <div class="kpi-big-value">@kpi6VariasiBebanKerja.ToString("F2")</div>
+            <div class="kpi-desc">Std Deviation Waktu Kerja per Staf</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 7: % Penggunaan DTS</div>
+            <div class="kpi-big-value">@kpi7PenggunaanDTS.ToString("F1")%</div>
+            <div class="kpi-desc">Aktivitas DTS / Total</div>
+        </div>
+        <div class="kpi-detail-card">
+            <div class="kpi-title">KPI 8: % Penggunaan Stage/Proman</div>
+            <div class="kpi-big-value">@kpi8PenggunaanStageProman.ToString("F1")%</div>
+            <div class="kpi-desc">Aktivitas Stage/Proman / Total</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <h3>Ringkasan Aktivitas per Jenis</h3>
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Jenis Aktivitas</th>
+                <th>Jumlah</th>
+                <th>Total Durasi (Menit)</th>
+                <th>Rata-rata Durasi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (activitySummary != null)
+            {
+                @foreach (var item in activitySummary)
+                {
+                    <tr>
+                        <td>@item.NamaAktivitas</td>
+                        <td>@item.Count</td>
+                        <td>@item.TotalDurasi</td>
+                        <td>@item.AvgDurasi.ToString("F1") menit</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private DateOnly startDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
+    private DateOnly endDate = DateOnly.FromDateTime(DateTime.Today);
+    private string? selectedUserId;
+    private string? selectedBagian;
+    private bool isAdmin;
+    private ApplicationUser? currentUser;
+
+    private List<ApplicationUser>? users;
+    private List<string>? bagianList;
+
+    // Summary Data
+    private double totalWaktuAktivitas;
+    private int totalAktivitas;
+    private int totalAktivitasBerulang;
+    private int totalAktivitasKomputerisasi;
+    private int totalAktivitasManual;
+    private string aktivitasPalingBanyak = "-";
+
+    // KPIs
+    private double kpi1WaktuEfektif;
+    private double kpi2RasioManualKomputerisasi;
+    private double kpi3AktivitasBerulang;
+    private double kpi4PembuatanLaporan;
+    private double kpi5PemanfaatanKomputer;
+    private double kpi6VariasiBebanKerja;
+    private double kpi7PenggunaanDTS;
+    private double kpi8PenggunaanStageProman;
+
+    private List<ActivitySummaryItem>? activitySummary;
+
+    private const int JAM_KERJA_PER_HARI = 8;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (userId != null)
+        {
+            currentUser = await UserManager.FindByIdAsync(userId);
+            isAdmin = currentUser?.Role == "Admin";
+        }
+
+        if (isAdmin)
+        {
+            users = await DbContext.Users.Where(u => u.Role == "Staff").ToListAsync();
+            bagianList = await DbContext.Users.Where(u => u.Bagian != null).Select(u => u.Bagian!).Distinct().ToListAsync();
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IQueryable<ActivityLog> query = DbContext.ActivityLogs
+            .Include(x => x.Aktivitas)
+            .Include(x => x.Frekuensi)
+            .Include(x => x.MetodeKerja)
+            .Include(x => x.Aplikasi)
+            .Include(x => x.User)
+            .Where(x => x.Tanggal >= startDate && x.Tanggal <= endDate);
+
+        if (!isAdmin && currentUser != null)
+        {
+            query = query.Where(x => x.UserID == currentUser.Id);
+        }
+        else if (isAdmin)
+        {
+            if (!string.IsNullOrEmpty(selectedUserId))
+            {
+                query = query.Where(x => x.UserID == selectedUserId);
+            }
+            if (!string.IsNullOrEmpty(selectedBagian))
+            {
+                query = query.Where(x => x.User != null && x.User.Bagian == selectedBagian);
+            }
+        }
+
+        var logs = await query.ToListAsync();
+
+        // Calculate summary
+        totalAktivitas = logs.Count;
+        totalWaktuAktivitas = logs.Sum(x => x.DurasiMenit) / 60.0;
+        
+        // Aktivitas berulang (bukan Insidentil - FrequencyID 5)
+        totalAktivitasBerulang = logs.Count(x => x.FrekuensiID != 5);
+        
+        // Aktivitas komputerisasi (Sistem Aplikasi - MethodID 4)
+        totalAktivitasKomputerisasi = logs.Count(x => x.MetodeKerjaID == 4);
+        totalAktivitasManual = logs.Count(x => x.MetodeKerjaID != 4);
+
+        // Aktivitas paling banyak
+        var mostCommon = logs.Where(x => x.Aktivitas != null)
+            .GroupBy(x => x.Aktivitas!.NamaAktivitas)
+            .OrderByDescending(g => g.Count())
+            .FirstOrDefault();
+        aktivitasPalingBanyak = mostCommon?.Key ?? "-";
+
+        // Calculate KPIs
+        int totalDays = endDate.DayNumber - startDate.DayNumber + 1;
+        int workDays = CalculateWorkDays(startDate, endDate);
+        double totalJamKerja = workDays * JAM_KERJA_PER_HARI;
+
+        // KPI 1: % Waktu Efektif
+        kpi1WaktuEfektif = totalJamKerja > 0 ? (totalWaktuAktivitas / totalJamKerja) * 100 : 0;
+
+        // KPI 2: Rasio Manual / Komputerisasi
+        kpi2RasioManualKomputerisasi = totalAktivitasKomputerisasi > 0 
+            ? ((double)totalAktivitasManual / totalAktivitasKomputerisasi) * 100 : 0;
+
+        // KPI 3: % Aktivitas Berulang
+        kpi3AktivitasBerulang = totalAktivitas > 0 
+            ? ((double)totalAktivitasBerulang / totalAktivitas) * 100 : 0;
+
+        // KPI 4: % Pembuatan Laporan (AktivitasID 4 = Laporan Data)
+        int laporanCount = logs.Count(x => x.AktivitasID == 4);
+        kpi4PembuatanLaporan = totalAktivitas > 0 
+            ? ((double)laporanCount / totalAktivitas) * 100 : 0;
+
+        // KPI 5: % Pemanfaatan Komputer
+        double totalMenitPCTersedia = workDays * JAM_KERJA_PER_HARI * 60;
+        double totalMenitAktivitas = logs.Sum(x => x.DurasiMenit);
+        kpi5PemanfaatanKomputer = totalMenitPCTersedia > 0 
+            ? (totalMenitAktivitas / totalMenitPCTersedia) * 100 : 0;
+
+        // KPI 6: Variasi Beban Kerja (Standard Deviation)
+        var waktuPerStaf = logs.GroupBy(x => x.UserID)
+            .Select(g => g.Sum(x => x.DurasiMenit) / 60.0)
+            .ToList();
+        kpi6VariasiBebanKerja = CalculateStdDev(waktuPerStaf);
+
+        // KPI 7: % Penggunaan DTS (ApplicationID 1)
+        int dtsCount = logs.Count(x => x.AplikasiID == 1);
+        kpi7PenggunaanDTS = totalAktivitas > 0 
+            ? ((double)dtsCount / totalAktivitas) * 100 : 0;
+
+        // KPI 8: % Penggunaan Stage/Proman (ApplicationID 2)
+        int stagePromanCount = logs.Count(x => x.AplikasiID == 2);
+        kpi8PenggunaanStageProman = totalAktivitas > 0 
+            ? ((double)stagePromanCount / totalAktivitas) * 100 : 0;
+
+        // Activity Summary
+        activitySummary = logs.Where(x => x.Aktivitas != null)
+            .GroupBy(x => x.Aktivitas!.NamaAktivitas)
+            .Select(g => new ActivitySummaryItem
+            {
+                NamaAktivitas = g.Key,
+                Count = g.Count(),
+                TotalDurasi = g.Sum(x => x.DurasiMenit),
+                AvgDurasi = g.Average(x => x.DurasiMenit)
+            })
+            .OrderByDescending(x => x.TotalDurasi)
+            .ToList();
+    }
+
+    private int CalculateWorkDays(DateOnly start, DateOnly end)
+    {
+        int workDays = 0;
+        var current = start;
+        while (current <= end)
+        {
+            if (current.DayOfWeek != DayOfWeek.Saturday && current.DayOfWeek != DayOfWeek.Sunday)
+            {
+                workDays++;
+            }
+            current = current.AddDays(1);
+        }
+        return workDays;
+    }
+
+    private double CalculateStdDev(List<double> values)
+    {
+        if (values.Count < 2) return 0;
+        double avg = values.Average();
+        double sumSquares = values.Sum(v => Math.Pow(v - avg, 2));
+        return Math.Sqrt(sumSquares / values.Count);
+    }
+
+    private class ActivitySummaryItem
+    {
+        public string NamaAktivitas { get; set; } = "";
+        public int Count { get; set; }
+        public int TotalDurasi { get; set; }
+        public double AvgDurasi { get; set; }
+    }
+}

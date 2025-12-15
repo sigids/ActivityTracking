@@ -1,0 +1,359 @@
+@page "/activity-input"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+@using System.Security.Claims
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Input Aktivitas Harian</PageTitle>
+
+<div class="page-header">
+    <h1>Input Aktivitas Harian</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        @message
+    </div>
+}
+
+@if (currentUser != null)
+{
+    <div class="card mb-3">
+        <h3>Informasi Karyawan</h3>
+        <div class="info-grid">
+            <div class="info-item"><strong>Employee ID:</strong> @currentUser.EmployeeID</div>
+            <div class="info-item"><strong>Nama:</strong> @currentUser.Nama</div>
+            <div class="info-item"><strong>Jabatan:</strong> @currentUser.Jabatan</div>
+            <div class="info-item"><strong>Bagian:</strong> @currentUser.Bagian</div>
+            <div class="info-item"><strong>Unit:</strong> @currentUser.Unit</div>
+            <div class="info-item"><strong>Tipe Karyawan:</strong> @currentUser.TipeKaryawan</div>
+        </div>
+        <div class="mt-3">
+            <label><strong>Tanggal:</strong></label>
+            <input type="date" @bind="selectedDate" class="form-control" style="max-width: 200px;" />
+        </div>
+    </div>
+}
+
+<div class="card">
+    <h3>Daftar Aktivitas</h3>
+    
+    <div class="table-responsive">
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Komputer No</th>
+                    <th>Aktivitas</th>
+                    <th>Deskripsi</th>
+                    <th>Digunakan Oleh</th>
+                    <th>Waktu Mulai</th>
+                    <th>Waktu Selesai</th>
+                    <th>Durasi (Mnt)</th>
+                    <th>Frekuensi</th>
+                    <th>Metode Kerja</th>
+                    <th>Aplikasi</th>
+                    <th>Jenis Dok</th>
+                    <th>Nama Dok</th>
+                    <th>Asal Dok</th>
+                    <th>Keterangan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < activityRows.Count; i++)
+                {
+                    var index = i;
+                    var row = activityRows[index];
+                    <tr>
+                        <td>@(index + 1)</td>
+                        <td><input type="text" @bind="row.ComputerNo" class="form-control form-control-sm" /></td>
+                        <td>
+                            <select @bind="row.AktivitasID" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (activities != null)
+                                {
+                                    @foreach (var a in activities)
+                                    {
+                                        <option value="@a.AktivitasID">@a.NamaAktivitas</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                        <td><input type="text" @bind="row.Deskripsi" class="form-control form-control-sm" /></td>
+                        <td><input type="text" @bind="row.DigunakanOleh" class="form-control form-control-sm" /></td>
+                        <td><input type="time" value="@row.WaktuMulaiStr" @onchange="@(e => { row.WaktuMulaiStr = e.Value?.ToString(); CalculateDuration(row); })" class="form-control form-control-sm" /></td>
+                        <td><input type="time" value="@row.WaktuSelesaiStr" @onchange="@(e => { row.WaktuSelesaiStr = e.Value?.ToString(); CalculateDuration(row); })" class="form-control form-control-sm" /></td>
+                        <td><input type="number" @bind="row.DurasiMenit" class="form-control form-control-sm" style="width: 70px;" /></td>
+                        <td>
+                            <select @bind="row.FrekuensiID" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (frequencies != null)
+                                {
+                                    @foreach (var f in frequencies)
+                                    {
+                                        <option value="@f.FrequencyID">@f.NamaFrekuensi</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select @bind="row.MetodeKerjaID" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (methods != null)
+                                {
+                                    @foreach (var m in methods)
+                                    {
+                                        <option value="@m.MethodID">@m.NamaMetode</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select @bind="row.AplikasiID" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (applications != null)
+                                {
+                                    @foreach (var ap in applications)
+                                    {
+                                        <option value="@ap.ApplicationID">@ap.NamaAplikasi</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                        <td><input type="text" @bind="row.JenisDok" class="form-control form-control-sm" /></td>
+                        <td><input type="text" @bind="row.NamaDok" class="form-control form-control-sm" /></td>
+                        <td><input type="text" @bind="row.AsalDok" class="form-control form-control-sm" /></td>
+                        <td><input type="text" @bind="row.Keterangan" class="form-control form-control-sm" /></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => RemoveRow(index)">Hapus</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <button class="btn btn-secondary" @onclick="AddRow">+ Tambah Baris</button>
+        <button class="btn btn-primary" @onclick="SaveActivities">Simpan Data Harian</button>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <h3>Riwayat Aktivitas Hari Ini</h3>
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Aktivitas</th>
+                <th>Deskripsi</th>
+                <th>Waktu</th>
+                <th>Durasi</th>
+                <th>Metode</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (todayLogs != null && todayLogs.Any())
+            {
+                int no = 1;
+                @foreach (var log in todayLogs)
+                {
+                    <tr>
+                        <td>@(no++)</td>
+                        <td>@log.Aktivitas?.NamaAktivitas</td>
+                        <td>@log.Deskripsi</td>
+                        <td>@log.WaktuMulai?.ToString("HH:mm") - @log.WaktuSelesai?.ToString("HH:mm")</td>
+                        <td>@log.DurasiMenit menit</td>
+                        <td>@log.MetodeKerja?.NamaMetode</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteLog(log.LogID)">Hapus</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" style="text-align: center;">Belum ada aktivitas hari ini</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private ApplicationUser? currentUser;
+    private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
+    private List<ActivityRowModel> activityRows = new();
+    private List<ActivityLog>? todayLogs;
+
+    private List<MasterActivity>? activities;
+    private List<MasterFrequency>? frequencies;
+    private List<MasterWorkMethod>? methods;
+    private List<MasterApplication>? applications;
+
+    private string? message;
+    private bool isError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (userId != null)
+        {
+            currentUser = await UserManager.FindByIdAsync(userId);
+        }
+
+        activities = await DbContext.MasterActivities.Where(x => x.IsActive).ToListAsync();
+        frequencies = await DbContext.MasterFrequencies.Where(x => x.IsActive).ToListAsync();
+        methods = await DbContext.MasterWorkMethods.Where(x => x.IsActive).ToListAsync();
+        applications = await DbContext.MasterApplications.Where(x => x.IsActive).ToListAsync();
+
+        AddRow();
+        await LoadTodayLogs();
+    }
+
+    private async Task LoadTodayLogs()
+    {
+        if (currentUser == null) return;
+        
+        todayLogs = await DbContext.ActivityLogs
+            .Include(x => x.Aktivitas)
+            .Include(x => x.MetodeKerja)
+            .Where(x => x.UserID == currentUser.Id && x.Tanggal == selectedDate)
+            .OrderBy(x => x.WaktuMulai)
+            .ToListAsync();
+    }
+
+    private void AddRow()
+    {
+        activityRows.Add(new ActivityRowModel());
+    }
+
+    private void RemoveRow(int index)
+    {
+        if (activityRows.Count > 1)
+        {
+            activityRows.RemoveAt(index);
+        }
+    }
+
+    private void CalculateDuration(ActivityRowModel row)
+    {
+        if (!string.IsNullOrEmpty(row.WaktuMulaiStr) && !string.IsNullOrEmpty(row.WaktuSelesaiStr))
+        {
+            if (TimeSpan.TryParse(row.WaktuMulaiStr, out var mulai) && TimeSpan.TryParse(row.WaktuSelesaiStr, out var selesai))
+            {
+                var duration = selesai - mulai;
+                row.DurasiMenit = (int)duration.TotalMinutes;
+                if (row.DurasiMenit < 0) row.DurasiMenit = 0;
+            }
+        }
+    }
+
+    private async Task SaveActivities()
+    {
+        if (currentUser == null)
+        {
+            message = "User tidak ditemukan";
+            isError = true;
+            return;
+        }
+
+        var validRows = activityRows.Where(r => r.AktivitasID.HasValue).ToList();
+        
+        if (!validRows.Any())
+        {
+            message = "Pilih minimal satu aktivitas";
+            isError = true;
+            return;
+        }
+
+        foreach (var row in validRows)
+        {
+            TimeOnly? waktuMulai = null;
+            TimeOnly? waktuSelesai = null;
+            
+            if (!string.IsNullOrEmpty(row.WaktuMulaiStr) && TimeSpan.TryParse(row.WaktuMulaiStr, out var mulai))
+                waktuMulai = TimeOnly.FromTimeSpan(mulai);
+            if (!string.IsNullOrEmpty(row.WaktuSelesaiStr) && TimeSpan.TryParse(row.WaktuSelesaiStr, out var selesai))
+                waktuSelesai = TimeOnly.FromTimeSpan(selesai);
+
+            var log = new ActivityLog
+            {
+                UserID = currentUser.Id,
+                Tanggal = selectedDate,
+                ComputerNo = row.ComputerNo,
+                AktivitasID = row.AktivitasID,
+                Deskripsi = row.Deskripsi,
+                DigunakanOleh = row.DigunakanOleh,
+                WaktuMulai = waktuMulai,
+                WaktuSelesai = waktuSelesai,
+                DurasiMenit = row.DurasiMenit,
+                FrekuensiID = row.FrekuensiID,
+                MetodeKerjaID = row.MetodeKerjaID,
+                AplikasiID = row.AplikasiID,
+                JenisDok = row.JenisDok,
+                NamaDok = row.NamaDok,
+                AsalDok = row.AsalDok,
+                Keterangan = row.Keterangan,
+                CreatedAt = DateTime.Now
+            };
+
+            DbContext.ActivityLogs.Add(log);
+        }
+
+        await DbContext.SaveChangesAsync();
+        
+        message = $"{validRows.Count} aktivitas berhasil disimpan";
+        isError = false;
+        
+        activityRows.Clear();
+        AddRow();
+        await LoadTodayLogs();
+    }
+
+    private async Task DeleteLog(int logId)
+    {
+        var log = await DbContext.ActivityLogs.FindAsync(logId);
+        if (log != null)
+        {
+            DbContext.ActivityLogs.Remove(log);
+            await DbContext.SaveChangesAsync();
+            message = "Aktivitas berhasil dihapus";
+            isError = false;
+            await LoadTodayLogs();
+        }
+    }
+
+    private class ActivityRowModel
+    {
+        public string? ComputerNo { get; set; }
+        public int? AktivitasID { get; set; }
+        public string? Deskripsi { get; set; }
+        public string? DigunakanOleh { get; set; }
+        public string? WaktuMulaiStr { get; set; }
+        public string? WaktuSelesaiStr { get; set; }
+        public int DurasiMenit { get; set; }
+        public int? FrekuensiID { get; set; }
+        public int? MetodeKerjaID { get; set; }
+        public int? AplikasiID { get; set; }
+        public string? JenisDok { get; set; }
+        public string? NamaDok { get; set; }
+        public string? AsalDok { get; set; }
+        public string? Keterangan { get; set; }
+    }
+}

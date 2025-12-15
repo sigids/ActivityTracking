@@ -1,0 +1,337 @@
+@page "/users"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Manajemen Pengguna</PageTitle>
+
+<div class="page-header">
+    <h1>Manajemen Pengguna</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        @message
+    </div>
+}
+
+<div class="card mb-3">
+    <h3>@(editingUser == null ? "Tambah Pengguna Baru" : "Edit Pengguna")</h3>
+    <EditForm Model="formModel" OnValidSubmit="SaveUser">
+        <DataAnnotationsValidator />
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Employee ID *</label>
+                <InputText @bind-Value="formModel.EmployeeID" class="form-control" />
+                <ValidationMessage For="() => formModel.EmployeeID" />
+            </div>
+            <div class="form-group">
+                <label>Nama *</label>
+                <InputText @bind-Value="formModel.Nama" class="form-control" />
+                <ValidationMessage For="() => formModel.Nama" />
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <InputText @bind-Value="formModel.Email" class="form-control" disabled="@(editingUser != null)" />
+                <ValidationMessage For="() => formModel.Email" />
+            </div>
+            @if (editingUser == null)
+            {
+                <div class="form-group">
+                    <label>Password *</label>
+                    <InputText type="password" @bind-Value="formModel.Password" class="form-control" />
+                    <ValidationMessage For="() => formModel.Password" />
+                </div>
+            }
+            <div class="form-group">
+                <label>Jabatan</label>
+                <InputSelect @bind-Value="formModel.Jabatan" class="form-control">
+                    <option value="">-- Pilih Jabatan --</option>
+                    @if (jabatans != null)
+                    {
+                        @foreach (var j in jabatans)
+                        {
+                            <option value="@j.NamaJabatan">@j.NamaJabatan</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Bagian</label>
+                <InputSelect @bind-Value="formModel.Bagian" class="form-control">
+                    <option value="">-- Pilih Bagian --</option>
+                    @if (bagians != null)
+                    {
+                        @foreach (var b in bagians)
+                        {
+                            <option value="@b.NamaBagian">@b.NamaBagian</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Unit</label>
+                <InputSelect @bind-Value="formModel.Unit" class="form-control">
+                    <option value="">-- Pilih Unit --</option>
+                    @if (units != null)
+                    {
+                        @foreach (var u in units)
+                        {
+                            <option value="@u.NamaUnit">@u.NamaUnit</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Tipe Karyawan</label>
+                <InputSelect @bind-Value="formModel.TipeKaryawan" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Daily">Daily</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Tipe Komputer</label>
+                <InputSelect @bind-Value="formModel.KomputerType" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option value="Dedicated">Dedicated</option>
+                    <option value="Shared">Shared</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Role *</label>
+                <InputSelect @bind-Value="formModel.Role" class="form-control">
+                    <option value="Staff">Staff</option>
+                    <option value="Admin">Admin</option>
+                </InputSelect>
+            </div>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">@(editingUser == null ? "Tambah" : "Simpan")</button>
+            @if (editingUser != null)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Batal</button>
+            }
+        </div>
+    </EditForm>
+</div>
+
+<div class="card">
+    <h3>Daftar Pengguna</h3>
+    <div class="table-responsive">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Jabatan</th>
+                    <th>Bagian</th>
+                    <th>Unit</th>
+                    <th>Tipe</th>
+                    <th>Role</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (users != null && users.Any())
+                {
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.EmployeeID</td>
+                            <td>@user.Nama</td>
+                            <td>@user.Email</td>
+                            <td>@user.Jabatan</td>
+                            <td>@user.Bagian</td>
+                            <td>@user.Unit</td>
+                            <td>@user.TipeKaryawan</td>
+                            <td><span class="badge @(user.Role == "Admin" ? "badge-admin" : "badge-staff")">@user.Role</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" @onclick="() => EditUser(user)">Edit</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteUser(user.Id)">Hapus</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: #666;">Tidak ada pengguna</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<ApplicationUser>? users;
+    private List<MasterJabatan>? jabatans;
+    private List<MasterBagian>? bagians;
+    private List<MasterUnit>? units;
+    private string? message;
+    private bool isError;
+    private ApplicationUser? editingUser;
+    private UserFormModel formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+        await LoadMasterData();
+    }
+
+    private async Task LoadUsers()
+    {
+        users = await UserManager.Users.OrderBy(u => u.Nama).ToListAsync();
+    }
+
+    private async Task LoadMasterData()
+    {
+        jabatans = await DbContext.MasterJabatans.Where(x => x.IsActive).OrderBy(x => x.NamaJabatan).ToListAsync();
+        bagians = await DbContext.MasterBagians.Where(x => x.IsActive).OrderBy(x => x.NamaBagian).ToListAsync();
+        units = await DbContext.MasterUnits.Where(x => x.IsActive).OrderBy(x => x.NamaUnit).ToListAsync();
+    }
+
+    private void EditUser(ApplicationUser user)
+    {
+        editingUser = user;
+        formModel = new UserFormModel
+        {
+            EmployeeID = user.EmployeeID ?? "",
+            Nama = user.Nama ?? "",
+            Email = user.Email ?? "",
+            Jabatan = user.Jabatan,
+            Bagian = user.Bagian,
+            Unit = user.Unit,
+            TipeKaryawan = user.TipeKaryawan,
+            KomputerType = user.KomputerType,
+            Role = user.Role
+        };
+    }
+
+    private void CancelEdit()
+    {
+        editingUser = null;
+        formModel = new UserFormModel();
+    }
+
+    private async Task SaveUser()
+    {
+        if (editingUser != null)
+        {
+            // Update existing user
+            editingUser.EmployeeID = formModel.EmployeeID;
+            editingUser.Nama = formModel.Nama;
+            editingUser.Jabatan = formModel.Jabatan;
+            editingUser.Bagian = formModel.Bagian;
+            editingUser.Unit = formModel.Unit;
+            editingUser.TipeKaryawan = formModel.TipeKaryawan;
+            editingUser.KomputerType = formModel.KomputerType;
+            editingUser.Role = formModel.Role;
+
+            var result = await UserManager.UpdateAsync(editingUser);
+            if (result.Succeeded)
+            {
+                message = "Pengguna berhasil diupdate";
+                isError = false;
+                CancelEdit();
+                await LoadUsers();
+            }
+            else
+            {
+                message = $"Error: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                isError = true;
+            }
+        }
+        else
+        {
+            // Create new user
+            if (string.IsNullOrEmpty(formModel.Password))
+            {
+                message = "Password wajib diisi untuk pengguna baru";
+                isError = true;
+                return;
+            }
+
+            var newUser = new ApplicationUser
+            {
+                UserName = formModel.Email,
+                Email = formModel.Email,
+                EmployeeID = formModel.EmployeeID,
+                Nama = formModel.Nama,
+                Jabatan = formModel.Jabatan,
+                Bagian = formModel.Bagian,
+                Unit = formModel.Unit,
+                TipeKaryawan = formModel.TipeKaryawan,
+                KomputerType = formModel.KomputerType,
+                Role = formModel.Role,
+                EmailConfirmed = true
+            };
+
+            var result = await UserManager.CreateAsync(newUser, formModel.Password);
+            if (result.Succeeded)
+            {
+                message = "Pengguna berhasil ditambahkan";
+                isError = false;
+                formModel = new UserFormModel();
+                await LoadUsers();
+            }
+            else
+            {
+                message = $"Error: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                isError = true;
+            }
+        }
+    }
+
+    private async Task DeleteUser(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user != null)
+        {
+            var result = await UserManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                message = $"Pengguna '{user.Nama}' berhasil dihapus";
+                isError = false;
+                await LoadUsers();
+            }
+            else
+            {
+                message = $"Error: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                isError = true;
+            }
+        }
+    }
+
+    private class UserFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Employee ID wajib diisi")]
+        public string EmployeeID { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Nama wajib diisi")]
+        public string Nama { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email wajib diisi")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Format email tidak valid")]
+        public string Email { get; set; } = "";
+
+        public string? Password { get; set; }
+        public string? Jabatan { get; set; }
+        public string? Bagian { get; set; }
+        public string? Unit { get; set; }
+        public string? TipeKaryawan { get; set; }
+        public string? KomputerType { get; set; }
+        public string Role { get; set; } = "Staff";
+    }
+}
