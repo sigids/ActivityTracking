@@ -434,6 +434,14 @@ html, body {
     white-space: nowrap;
 }
 
+    .activity-table .header-group .header-group-cell {
+        background: #1e61db;
+        color: white;
+        text-align: center;
+        font-weight: 700;
+        border: 1px solid #ffffff;
+    }
+
 .activity-table input,
 .activity-table select {
     width: 100%;

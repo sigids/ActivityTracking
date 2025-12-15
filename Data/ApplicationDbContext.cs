@@ -14,6 +14,8 @@ namespace ActivityTracking.Data
         public DbSet<MasterUnit> MasterUnits { get; set; }
         public DbSet<MasterComputer> MasterComputers { get; set; }
         public DbSet<MasterPengguna> MasterPenggunas { get; set; }
+        public DbSet<MasterJenisDok> MasterJenisDoks { get; set; }
+        public DbSet<MasterAsalDok> MasterAsalDoks { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<ActivityLogFile> ActivityLogFiles { get; set; }
 
@@ -83,6 +85,25 @@ namespace ActivityTracking.Data
                 new MasterPengguna { PenggunaID = 1, NamaPengguna = "Internal" },
                 new MasterPengguna { PenggunaID = 2, NamaPengguna = "Eksternal" },
                 new MasterPengguna { PenggunaID = 3, NamaPengguna = "Pribadi" }
+            );
+
+            builder.Entity<MasterJenisDok>().HasData(
+                new MasterJenisDok { JenisDokID = 1, NamaJenisDok = "Excel" },
+                new MasterJenisDok { JenisDokID = 2, NamaJenisDok = "PDF" },
+                new MasterJenisDok { JenisDokID = 3, NamaJenisDok = "Word" },
+                new MasterJenisDok { JenisDokID = 4, NamaJenisDok = "Gambar" },
+                new MasterJenisDok { JenisDokID = 5, NamaJenisDok = "Print Out" },
+                new MasterJenisDok { JenisDokID = 6, NamaJenisDok = "Tulisan Tangan" },
+                new MasterJenisDok { JenisDokID = 7, NamaJenisDok = "Lainnya" }
+            );
+
+            builder.Entity<MasterAsalDok>().HasData(
+                new MasterAsalDok { AsalDokID = 1, NamaAsalDok = "Cutting" },
+                new MasterAsalDok { AsalDokID = 2, NamaAsalDok = "IE" },
+                new MasterAsalDok { AsalDokID = 3, NamaAsalDok = "Sewing Line" },
+                new MasterAsalDok { AsalDokID = 4, NamaAsalDok = "HRD" },
+                new MasterAsalDok { AsalDokID = 5, NamaAsalDok = "Packing" },
+                new MasterAsalDok { AsalDokID = 6, NamaAsalDok = "Lainnya" }
             );
         }
     }

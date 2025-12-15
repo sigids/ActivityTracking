@@ -32,6 +32,8 @@
     <button class="tab-btn @(activeTab == "units" ? "active" : "")" @onclick="@(() => SetTab("units"))">Unit</button>
     <button class="tab-btn @(activeTab == "computers" ? "active" : "")" @onclick="@(() => SetTab("computers"))">Komputer</button>
     <button class="tab-btn @(activeTab == "penggunas" ? "active" : "")" @onclick="@(() => SetTab("penggunas"))">Digunakan Oleh</button>
+    <button class="tab-btn @(activeTab == "jenisdoks" ? "active" : "")" @onclick="@(() => SetTab("jenisdoks"))">Jenis Dokumen</button>
+    <button class="tab-btn @(activeTab == "asaldoks" ? "active" : "")" @onclick="@(() => SetTab("asaldoks"))">Asal Dokumen</button>
 </div>
 
 <div class="card">
@@ -494,6 +496,108 @@
             </tbody>
         </table>
     }
+    else if (activeTab == "jenisdoks")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newJenisDokName" placeholder="Nama Jenis Dokumen Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddJenisDok">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Jenis Dokumen</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (jenisdoks != null)
+                {
+                    @foreach (var item in jenisdoks)
+                    {
+                        <tr>
+                            <td>@item.JenisDokID</td>
+                            <td>
+                                @if (editingJenisDokId == item.JenisDokID)
+                                {
+                                    <input type="text" @bind="editJenisDokName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaJenisDok
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingJenisDokId == item.JenisDokID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveJenisDok(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditJenisDok(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleJenisDokStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "asaldoks")
+    {
+        <div class="form-inline mb-3">
+            <input type="text" @bind="newAsalDokName" placeholder="Nama Asal Dokumen Baru" class="form-control" />
+            <button class="btn btn-primary" @onclick="AddAsalDok">Tambah</button>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Asal Dokumen</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (asaldoks != null)
+                {
+                    @foreach (var item in asaldoks)
+                    {
+                        <tr>
+                            <td>@item.AsalDokID</td>
+                            <td>
+                                @if (editingAsalDokId == item.AsalDokID)
+                                {
+                                    <input type="text" @bind="editAsalDokName" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.NamaAsalDok
+                                }
+                            </td>
+                            <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
+                            <td>
+                                @if (editingAsalDokId == item.AsalDokID)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveAsalDok(item)">Simpan</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Batal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditAsalDok(item)">Edit</button>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleAsalDokStatus(item)">@(item.IsActive ? "Nonaktifkan" : "Aktifkan")</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 @code {
@@ -510,6 +614,8 @@
     private List<MasterUnit>? units;
     private List<MasterComputer>? computers;
     private List<MasterPengguna>? penggunas;
+    private List<MasterJenisDok>? jenisdoks;
+    private List<MasterAsalDok>? asaldoks;
 
     private string newActivityName = "";
     private string newFrequencyName = "";
@@ -520,6 +626,8 @@
     private string newUnitName = "";
     private string newComputerName = "";
     private string newPenggunaName = "";
+    private string newJenisDokName = "";
+    private string newAsalDokName = "";
 
     private int? editingActivityId;
     private int? editingFrequencyId;
@@ -530,6 +638,8 @@
     private int? editingUnitId;
     private int? editingComputerId;
     private int? editingPenggunaId;
+    private int? editingJenisDokId;
+    private int? editingAsalDokId;
 
     private string editActivityName = "";
     private string editFrequencyName = "";
@@ -540,6 +650,8 @@
     private string editUnitName = "";
     private string editComputerName = "";
     private string editPenggunaName = "";
+    private string editJenisDokName = "";
+    private string editAsalDokName = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -557,6 +669,8 @@
         units = await DbContext.MasterUnits.OrderBy(x => x.UnitID).ToListAsync();
         computers = await DbContext.MasterComputers.OrderBy(x => x.ComputerID).ToListAsync();
         penggunas = await DbContext.MasterPenggunas.OrderBy(x => x.PenggunaID).ToListAsync();
+        jenisdoks = await DbContext.MasterJenisDoks.OrderBy(x => x.JenisDokID).ToListAsync();
+        asaldoks = await DbContext.MasterAsalDoks.OrderBy(x => x.AsalDokID).ToListAsync();
     }
 
     private void SetTab(string tab)
@@ -576,6 +690,8 @@
         editingUnitId = null;
         editingComputerId = null;
         editingPenggunaId = null;
+        editingJenisDokId = null;
+        editingAsalDokId = null;
     }
 
     // Activities
@@ -890,6 +1006,76 @@
         item.IsActive = !item.IsActive;
         await DbContext.SaveChangesAsync();
         message = $"Status pengguna berhasil diubah";
+        isError = false;
+    }
+
+    // JenisDoks
+    private async Task AddJenisDok()
+    {
+        if (string.IsNullOrWhiteSpace(newJenisDokName)) return;
+        DbContext.MasterJenisDoks.Add(new MasterJenisDok { NamaJenisDok = newJenisDokName });
+        await DbContext.SaveChangesAsync();
+        newJenisDokName = "";
+        message = "Jenis Dokumen berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditJenisDok(MasterJenisDok item)
+    {
+        editingJenisDokId = item.JenisDokID;
+        editJenisDokName = item.NamaJenisDok;
+    }
+
+    private async Task SaveJenisDok(MasterJenisDok item)
+    {
+        item.NamaJenisDok = editJenisDokName;
+        await DbContext.SaveChangesAsync();
+        editingJenisDokId = null;
+        message = "Jenis Dokumen berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleJenisDokStatus(MasterJenisDok item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status jenis dokumen berhasil diubah";
+        isError = false;
+    }
+
+    // AsalDoks
+    private async Task AddAsalDok()
+    {
+        if (string.IsNullOrWhiteSpace(newAsalDokName)) return;
+        DbContext.MasterAsalDoks.Add(new MasterAsalDok { NamaAsalDok = newAsalDokName });
+        await DbContext.SaveChangesAsync();
+        newAsalDokName = "";
+        message = "Asal Dokumen berhasil ditambahkan";
+        isError = false;
+        await LoadAllData();
+    }
+
+    private void EditAsalDok(MasterAsalDok item)
+    {
+        editingAsalDokId = item.AsalDokID;
+        editAsalDokName = item.NamaAsalDok;
+    }
+
+    private async Task SaveAsalDok(MasterAsalDok item)
+    {
+        item.NamaAsalDok = editAsalDokName;
+        await DbContext.SaveChangesAsync();
+        editingAsalDokId = null;
+        message = "Asal Dokumen berhasil diupdate";
+        isError = false;
+    }
+
+    private async Task ToggleAsalDokStatus(MasterAsalDok item)
+    {
+        item.IsActive = !item.IsActive;
+        await DbContext.SaveChangesAsync();
+        message = $"Status asal dokumen berhasil diubah";
         isError = false;
     }
 }

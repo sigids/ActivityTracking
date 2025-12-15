@@ -4,6 +4,7 @@ using ActivityTracking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ActivityTracking.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215110453_AddMasterJenisDok")]
+    partial class AddMasterJenisDok
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -353,65 +356,6 @@ namespace ActivityTracking.Migrations
                             ApplicationID = 4,
                             IsActive = true,
                             NamaAplikasi = "Lainnya"
-                        });
-                });
-
-            modelBuilder.Entity("ActivityTracking.Data.MasterAsalDok", b =>
-                {
-                    b.Property<int>("AsalDokID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AsalDokID"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NamaAsalDok")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("AsalDokID");
-
-                    b.ToTable("MasterAsalDoks");
-
-                    b.HasData(
-                        new
-                        {
-                            AsalDokID = 1,
-                            IsActive = true,
-                            NamaAsalDok = "Cutting"
-                        },
-                        new
-                        {
-                            AsalDokID = 2,
-                            IsActive = true,
-                            NamaAsalDok = "IE"
-                        },
-                        new
-                        {
-                            AsalDokID = 3,
-                            IsActive = true,
-                            NamaAsalDok = "Sewing Line"
-                        },
-                        new
-                        {
-                            AsalDokID = 4,
-                            IsActive = true,
-                            NamaAsalDok = "HRD"
-                        },
-                        new
-                        {
-                            AsalDokID = 5,
-                            IsActive = true,
-                            NamaAsalDok = "Packing"
-                        },
-                        new
-                        {
-                            AsalDokID = 6,
-                            IsActive = true,
-                            NamaAsalDok = "Lainnya"
                         });
                 });
 

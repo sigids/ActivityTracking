@@ -57,11 +57,19 @@
     <div class="table-responsive">
         <table class="activity-table">
             <thead>
+                <tr class="header-group">
+                    <th colspan="6" class="header-group-cell" style="background-color">User Aktivitas Info</th>
+                    <th colspan="4" class="header-group-cell">Waktu dan Frekuensi</th>
+                    <th colspan="2" class="header-group-cell">Tingkat Komputerisasi</th>
+                    <th colspan="4" class="header-group-cell">Dokumen Pendukung</th>
+                    <th colspan="1" class="header-group-cell"></th>
+                </tr>
                 <tr>
                     <th>No</th>
                     <th>Komputer No</th>
                     <th>Aktivitas</th>
                     <th>Deskripsi</th>
+                    <th>Files</th>
                     <th>Digunakan Oleh</th>
                     <th>Waktu Mulai</th>
                     <th>Waktu Selesai</th>
@@ -73,7 +81,7 @@
                     <th>Nama Dok</th>
                     <th>Asal Dok</th>
                     <th>Keterangan</th>
-                    <th>Files</th>
+                    
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -109,6 +117,13 @@
                             </select>
                         </td>
                         <td><input type="text" @bind="row.Deskripsi" class="form-control form-control-sm" /></td>
+                        <td>
+                            <InputFile OnChange="@(e => OnFilesSelected(e, index))" multiple class="form-control form-control-sm" style="min-width: 150px;" />
+                            @if (row.SelectedFiles.Any())
+                            {
+                                <small class="text-muted">@row.SelectedFiles.Count file dipilih</small>
+                            }
+                        </td>
                         <td>
                             <select @bind="row.DigunakanOleh" class="form-control form-control-sm">
                                 <option value="">-- Pilih --</option>
@@ -160,17 +175,33 @@
                                 }
                             </select>
                         </td>
-                        <td><input type="text" @bind="row.JenisDok" class="form-control form-control-sm" /></td>
-                        <td><input type="text" @bind="row.NamaDok" class="form-control form-control-sm" /></td>
-                        <td><input type="text" @bind="row.AsalDok" class="form-control form-control-sm" /></td>
-                        <td><input type="text" @bind="row.Keterangan" class="form-control form-control-sm" /></td>
                         <td>
-                            <InputFile OnChange="@(e => OnFilesSelected(e, index))" multiple class="form-control form-control-sm" style="min-width: 150px;" />
-                            @if (row.SelectedFiles.Any())
-                            {
-                                <small class="text-muted">@row.SelectedFiles.Count file dipilih</small>
-                            }
+                            <select @bind="row.JenisDok" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (jenisdoks != null)
+                                {
+                                    @foreach (var jd in jenisdoks)
+                                    {
+                                        <option value="@jd.NamaJenisDok">@jd.NamaJenisDok</option>
+                                    }
+                                }
+                            </select>
                         </td>
+                        <td><input type="text" @bind="row.NamaDok" class="form-control form-control-sm" /></td>
+                        <td>
+                            <select @bind="row.AsalDok" class="form-control form-control-sm">
+                                <option value="">-- Pilih --</option>
+                                @if (asaldoks != null)
+                                {
+                                    @foreach (var ad in asaldoks)
+                                    {
+                                        <option value="@ad.NamaAsalDok">@ad.NamaAsalDok</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                        <td><input type="text" @bind="row.Keterangan" class="form-control form-control-sm" /></td>
+                        
                         <td>
                             <button class="btn btn-danger btn-sm" @onclick="() => RemoveRow(index)">Hapus</button>
                         </td>
@@ -196,6 +227,7 @@
                     <th>Komputer</th>
                     <th>Aktivitas</th>
                     <th>Deskripsi</th>
+                    <th>Files</th>
                     <th>Digunakan</th>
                     <th>Waktu Mulai</th>
                     <th>Waktu Selesai</th>
@@ -203,7 +235,7 @@
                     <th>Frekuensi</th>
                     <th>Metode</th>
                     <th>Aplikasi</th>
-                    <th>Files</th>
+                    
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -244,6 +276,25 @@
                                     </select>
                                 </td>
                                 <td><input type="text" @bind="editLog.Deskripsi" class="form-control form-control-sm" /></td>
+                                <td>
+                                    @if (log.Files != null && log.Files.Any())
+                                    {
+                                        <div class="file-list">
+                                            @foreach (var file in log.Files)
+                                            {
+                                                <div class="file-item">
+                                                    <a href="/uploads/@file.FileName" target="_blank" title="@file.OriginalFileName">
+                                                        @TruncateFileName(file.OriginalFileName)
+                                                    </a>
+                                                    <button type="button" class="btn-delete-file" @onclick="@(() => DeleteFile(file.FileID))" title="Hapus file">x</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    <div class="mt-1">
+                                        <InputFile OnChange="@(e => OnUploadFilesToLog(e, logId))" multiple class="form-control form-control-sm" style="font-size: 0.75rem;" />
+                                    </div>
+                                </td>
                                 <td>
                                     <select @bind="editLog.DigunakanOleh" class="form-control form-control-sm">
                                         <option value="">-- Pilih --</option>
@@ -301,6 +352,25 @@
                                 <td>@log.ComputerNo</td>
                                 <td>@log.Aktivitas?.NamaAktivitas</td>
                                 <td>@log.Deskripsi</td>
+                                <td>
+                                    @if (log.Files != null && log.Files.Any())
+                                    {
+                                        <div class="file-list">
+                                            @foreach (var file in log.Files)
+                                            {
+                                                <div class="file-item">
+                                                    <a href="/uploads/@file.FileName" target="_blank" title="@file.OriginalFileName">
+                                                        @TruncateFileName(file.OriginalFileName)
+                                                    </a>
+                                                    <button type="button" class="btn-delete-file" @onclick="@(() => DeleteFile(file.FileID))" title="Hapus file">x</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    <div class="mt-1">
+                                        <InputFile OnChange="@(e => OnUploadFilesToLog(e, logId))" multiple class="form-control form-control-sm" style="font-size: 0.75rem;" />
+                                    </div>
+                                </td>
                                 <td>@log.DigunakanOleh</td>
                                 <td>@log.WaktuMulai?.ToString("HH:mm")</td>
                                 <td>@log.WaktuSelesai?.ToString("HH:mm")</td>
@@ -309,25 +379,7 @@
                                 <td>@log.MetodeKerja?.NamaMetode</td>
                                 <td>@log.Aplikasi?.NamaAplikasi</td>
                             }
-                            <td>
-                                @if (log.Files != null && log.Files.Any())
-                                {
-                                    <div class="file-list">
-                                        @foreach (var file in log.Files)
-                                        {
-                                            <div class="file-item">
-                                                <a href="/uploads/@file.FileName" target="_blank" title="@file.OriginalFileName">
-                                                    @TruncateFileName(file.OriginalFileName)
-                                                </a>
-                                                <button type="button" class="btn-delete-file" @onclick="@(() => DeleteFile(file.FileID))" title="Hapus file">x</button>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                <div class="mt-1">
-                                    <InputFile OnChange="@(e => OnUploadFilesToLog(e, logId))" multiple class="form-control form-control-sm" style="font-size: 0.75rem;" />
-                                </div>
-                            </td>
+
                             <td>
                                 @if (isEditing)
                                 {
@@ -370,6 +422,8 @@
     private List<MasterApplication>? applications;
     private List<MasterComputer>? computers;
     private List<MasterPengguna>? penggunas;
+    private List<MasterJenisDok>? jenisdoks;
+    private List<MasterAsalDok>? asaldoks;
 
     private string? message;
     private bool isError;
@@ -416,6 +470,8 @@
         applications = await DbContext.MasterApplications.Where(x => x.IsActive).ToListAsync();
         computers = await DbContext.MasterComputers.Where(x => x.IsActive).ToListAsync();
         penggunas = await DbContext.MasterPenggunas.Where(x => x.IsActive).ToListAsync();
+        jenisdoks = await DbContext.MasterJenisDoks.Where(x => x.IsActive).ToListAsync();
+        asaldoks = await DbContext.MasterAsalDoks.Where(x => x.IsActive).ToListAsync();
 
         AddRow();
         await LoadTodayLogs();
