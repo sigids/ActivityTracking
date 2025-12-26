@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj": {}
+    "c:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj": {}
   },
   "projects": {
-    "C:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj": {
+    "c:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj",
+        "projectUniqueName": "c:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj",
         "projectName": "ActivityTracking",
-        "projectPath": "C:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj",
+        "projectPath": "c:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\ActivityTracking.csproj",
         "packagesPath": "C:\\Users\\sigid\\.nuget\\packages\\",
-        "outputPath": "C:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\obj\\",
+        "outputPath": "c:\\APPS-DEV\\ASPNETCORE\\ActivityTracking\\ActivityTracking\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
