@@ -51,6 +51,15 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
+// Serve uploaded files from wwwroot/uploads
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "uploads")),
+    RequestPath = "/uploads"
+});
 
 app.UseAntiforgery();
 

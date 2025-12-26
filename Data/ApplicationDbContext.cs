@@ -18,6 +18,7 @@ namespace ActivityTracking.Data
         public DbSet<MasterAsalDok> MasterAsalDoks { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<ActivityLogFile> ActivityLogFiles { get; set; }
+        public DbSet<StaffJamKerja> StaffJamKerjas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -105,6 +106,10 @@ namespace ActivityTracking.Data
                 new MasterAsalDok { AsalDokID = 5, NamaAsalDok = "Packing" },
                 new MasterAsalDok { AsalDokID = 6, NamaAsalDok = "Lainnya" }
             );
+
+            builder.Entity<StaffJamKerja>()
+                .HasIndex(x => new { x.UserId, x.Tanggal })
+                .IsUnique();
         }
     }
 }

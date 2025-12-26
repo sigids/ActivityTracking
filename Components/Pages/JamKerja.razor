@@ -1,0 +1,280 @@
+@page "/jam-kerja"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ActivityTracking.Data
+@using System.Security.Claims
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Jam Kerja Per Hari</PageTitle>
+
+<div class="page-header">
+    <h1>Jam Kerja Per Hari</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        @message
+    </div>
+}
+
+<div class="card mb-3">
+    <h3>Filter & Input Jam Kerja</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Tanggal</label>
+            <InputDate @bind-Value="selectedDate" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label>Staff</label>
+            <InputSelect @bind-Value="selectedUserId" class="form-control" disabled="@(!isAdmin)">
+                @if (isAdmin)
+                {
+                    <option value="">-- Pilih Staff --</option>
+                }
+                @if (users != null)
+                {
+                    @foreach (var user in users)
+                    {
+                        <option value="@user.Id">@user.Nama (@user.EmployeeID)</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+        <div class="form-group">
+            <label>Jam Kerja (0-24)</label>
+            <InputNumber @bind-Value="jamKerjaInput" class="form-control" min="0" max="24" step="0.5" />
+        </div>
+        <div class="form-group">
+            <label>Keterangan</label>
+            <InputText @bind-Value="keterangan" class="form-control" placeholder="Opsional" />
+        </div>
+    </div>
+    <div class="mt-3">
+        <button type="button" class="btn btn-primary" @onclick="SaveJamKerja">
+            @(editingId.HasValue ? "Update" : "Simpan")
+        </button>
+        @if (editingId.HasValue)
+        {
+            <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Batal</button>
+        }
+        <button type="button" class="btn btn-info" @onclick="LoadJamKerjaList" style="margin-left: 10px;">Tampilkan Data</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Daftar Jam Kerja - @selectedDate.ToString("dd MMMM yyyy")</h3>
+    <div class="table-responsive">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Nama Staff</th>
+                    <th>Jabatan</th>
+                    <th>Bagian</th>
+                    <th>Tanggal</th>
+                    <th>Jam Kerja</th>
+                    <th>Keterangan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (jamKerjaList != null && jamKerjaList.Any())
+                {
+                    @foreach (var jk in jamKerjaList)
+                    {
+                        <tr>
+                            <td>@jk.User?.EmployeeID</td>
+                            <td>@jk.User?.Nama</td>
+                            <td>@jk.User?.Jabatan</td>
+                            <td>@jk.User?.Bagian</td>
+                            <td>@jk.Tanggal.ToString("dd/MM/yyyy")</td>
+                            <td><strong>@jk.JamKerja.ToString("0.##") jam</strong></td>
+                            <td>@jk.Keterangan</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" @onclick="() => EditJamKerja(jk)">Edit</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteJamKerja(jk.JamKerjaID)">Hapus</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">Tidak ada data jam kerja untuk tanggal ini</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<ApplicationUser>? users;
+    private List<StaffJamKerja>? jamKerjaList;
+    private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
+    private string? selectedUserId;
+    private decimal jamKerjaInput = 8;
+    private string? keterangan;
+    private int? editingId;
+    private string? message;
+    private bool isError;
+    private bool isAdmin;
+    private ApplicationUser? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (userId != null)
+        {
+            currentUser = await UserManager.FindByIdAsync(userId);
+            isAdmin = currentUser?.Role == "Admin";
+        }
+
+        await LoadUsers();
+        await LoadJamKerjaList();
+    }
+
+    private async Task LoadUsers()
+    {
+        if (isAdmin)
+        {
+            users = await UserManager.Users
+                .Where(u => u.Role == "Staff")
+                .OrderBy(u => u.Nama)
+                .ToListAsync();
+        }
+        else if (currentUser != null)
+        {
+            users = new List<ApplicationUser> { currentUser };
+            selectedUserId = currentUser.Id;
+        }
+    }
+
+    private async Task LoadJamKerjaList()
+    {
+        IQueryable<StaffJamKerja> query = DbContext.StaffJamKerjas
+            .Include(x => x.User)
+            .Where(x => x.Tanggal == selectedDate);
+
+        if (!isAdmin && currentUser != null)
+        {
+            query = query.Where(x => x.UserId == currentUser.Id);
+        }
+
+        jamKerjaList = await query.OrderBy(x => x.User!.Nama).ToListAsync();
+    }
+
+    private async Task SaveJamKerja()
+    {
+        if (string.IsNullOrEmpty(selectedUserId))
+        {
+            message = "Pilih staff terlebih dahulu";
+            isError = true;
+            return;
+        }
+
+        if (jamKerjaInput < 0 || jamKerjaInput > 24)
+        {
+            message = "Jam kerja harus antara 0-24";
+            isError = true;
+            return;
+        }
+
+        try
+        {
+            if (editingId.HasValue)
+            {
+                var existing = await DbContext.StaffJamKerjas.FindAsync(editingId.Value);
+                if (existing != null)
+                {
+                    existing.UserId = selectedUserId;
+                    existing.Tanggal = selectedDate;
+                    existing.JamKerja = jamKerjaInput;
+                    existing.Keterangan = keterangan;
+                    existing.UpdatedAt = DateTime.Now;
+                    await DbContext.SaveChangesAsync();
+                    message = "Jam kerja berhasil diupdate";
+                }
+            }
+            else
+            {
+                var existingRecord = await DbContext.StaffJamKerjas
+                    .FirstOrDefaultAsync(x => x.UserId == selectedUserId && x.Tanggal == selectedDate);
+
+                if (existingRecord != null)
+                {
+                    message = "Data jam kerja untuk staff ini pada tanggal tersebut sudah ada. Gunakan tombol Edit untuk mengubah.";
+                    isError = true;
+                    return;
+                }
+
+                var newJamKerja = new StaffJamKerja
+                {
+                    UserId = selectedUserId,
+                    Tanggal = selectedDate,
+                    JamKerja = jamKerjaInput,
+                    Keterangan = keterangan,
+                    CreatedAt = DateTime.Now
+                };
+
+                DbContext.StaffJamKerjas.Add(newJamKerja);
+                await DbContext.SaveChangesAsync();
+                message = "Jam kerja berhasil disimpan";
+            }
+
+            isError = false;
+            ClearForm();
+            await LoadJamKerjaList();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private void EditJamKerja(StaffJamKerja jk)
+    {
+        editingId = jk.JamKerjaID;
+        selectedUserId = jk.UserId;
+        selectedDate = jk.Tanggal;
+        jamKerjaInput = jk.JamKerja;
+        keterangan = jk.Keterangan;
+    }
+
+    private void CancelEdit()
+    {
+        ClearForm();
+    }
+
+    private void ClearForm()
+    {
+        editingId = null;
+        selectedUserId = isAdmin ? null : currentUser?.Id;
+        jamKerjaInput = 8;
+        keterangan = null;
+    }
+
+    private async Task DeleteJamKerja(int id)
+    {
+        var jk = await DbContext.StaffJamKerjas.FindAsync(id);
+        if (jk != null)
+        {
+            DbContext.StaffJamKerjas.Remove(jk);
+            await DbContext.SaveChangesAsync();
+            message = "Jam kerja berhasil dihapus";
+            isError = false;
+            await LoadJamKerjaList();
+        }
+    }
+}

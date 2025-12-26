@@ -169,5 +169,7 @@ C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\refint
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ActivityTracking.pdb
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ActivityTracking.genruntimeconfig.cache
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ref\ActivityTracking.dll
-C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\usiv06gwzk-9oc9l2hova.gz
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\q634j7gp6n-ysr6n3ed8s.gz
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ActivityTracking.sourcelink.json
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

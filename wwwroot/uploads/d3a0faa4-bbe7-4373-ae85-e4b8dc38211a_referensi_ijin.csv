@@ -1,0 +1,206 @@
+KODE IJIN,NAMA IJIN
+00000,Dilarang
+01000,Dilarang
+01001,NPIK Beras
+01002,NPIK Gula
+01003,NPIK Kedelai
+01004,NPIK Jagung
+01005,NPIK TPT
+01006,NPIK Elektronik
+01007,NPIK Sepatu
+01008,NPIK Mainan Anak-anak
+01009,IT Cakram Optik
+01010,SPI Cakram Optik Isi/Kosong/Bahan Baku/Mesin dan Peralatan Mesin
+01011,IP Limbah Non B3
+01012,IP Bahan Berbahaya
+01013,IP Plastik
+01015,PI Cakram Optik Isi
+01016,PI Cakram Optik Kosong
+01017,PI Cakram Optik Mesin dan Peralatan Mesin
+01021,IP Bahan Baku Plastik
+01061,Surat Pendaftaran Barang
+01062,Nomor Pendaftaran Barang
+01099,Laporan Surveyor
+01203,IP Beras
+01204,IP BPO Non Metil Bromida
+01208,IP Nitrocellulose
+01209,IP Prekursor Non Farmasi
+01210,IP Tekstil
+01211,IP PCMX
+01212,IP Pelumas
+01213,IP Etilena
+01214,IP Garam Konsumsi
+01215,IP Garam Industri
+01216,IP Gula Kristal Rafinasi
+01217,IP BPO Metil Bromida
+01218,IP Gula Kristal Mentah
+01219,IP Besi atau Baja
+01291,IP / IT / SPI Garam Iodisasi / Non Iodisasi
+01292,PI Garam Industri/PI Garam Konsumsi
+01294,IP / IT / SPI BPO Metil atau Non Metil Bromida
+01295,IP/PI/IT Bahan Baku Plastik
+01296,IP / IT / SPI Prekursor Non Farmasi
+01297,IP / IT Besi Baja
+01302,IT Bahan Peledak Industri (Komersial)
+01304,IT BPO Non Metil Bromida
+01306,IT Garam
+01307,IT Intan Kasar
+01308,IT Mesin Multifungsi dan Printer Berwarna
+01309,IT Minuman Beralkohol
+01310,IT Nitro Cellulose
+01311,IT Prekursor Non Farmasi
+01312,IT Perkakas Tangan
+01313,IT Preparat Bau-bauan
+01314,IT Sakarin dan Garamnya
+01316,IT Besi atau Baja
+01321,PI Bahan Baku Plastik
+01399,IT Produk Tertentu
+01403,PI Bahan Berbahaya
+01405,PI Nitrocellulose
+01406,PI Prekursor Non Farmasi
+01407,PI Bahan Peledak Industri
+01408,PI Cengkeh
+01410,IP / SPI / IT Gula Kristal
+01411,PI Intan Kasar
+01412,SPI MMEA
+01413,PI Mesin Multi Fungsi dan Printer Berwarna
+01414,SPI Perkakas Tangan
+01415,SPI Preparat Bau-bauan
+01416,PI Sakarin
+01417,PI Preparat Campuran Mengandung Alkohol
+01418,PI Tabung gas 3 Kg
+01421,PI Siklamat
+01422,PI Beras
+01425,PI BPO Metil Bromida
+01426,PI BPO Non Metil Bromida
+01427,SPI Produk Kehutanan
+01501,Surat Pendaftaran Barang/Perkecualian SNI/NPB
+01502,PI Gula Kristal Putih
+01503,PI Barang Hibah
+01504,PI Barang Modal Bukan Baru Pemakai Langsung
+01505,PI Barang Impor Sementara
+01506,PI Barang Modal Bukan Baru Rekondisi
+01507,PI Pemasukan Barang Kembali
+01508,PI Tanpa API & NPIK
+01509,PI Tanpa NPIK
+01510,PI Cakram Otik Polycarbonat
+01511,PI Minyak dan Gas Bumi
+01512,PI Minuman Beralkohol
+01513,PI Pupuk Bersubsidi
+01514,PI Garam Industri
+01515,PI Barang Pindahan Duta Besar
+01516,PI Tidak Reekspor barang ex Impor Sementara
+01517,PI Tanpa API
+01518,IP Besi atau Baja K3S
+01519,IT Produk Tertentu - Alas Kaki
+01520,IT Produk Tertentu - Elektronika
+01521,IT Produk Tertentu - Mainan Anak-anak
+01522,IT Produk Tertentu - Pakaian Jadi
+01523,IT Produk Tertentu - Produk Makanan dan Minuman
+01524,IT Gula Kristal Putih
+01525,IT Non Cakram Optik
+01526,IT BPO Metil Bromida
+01527,PI Barang Modal Tidak Baru
+01530,PI Barang Modal Bukan Baru Pemakai Langsung / Rekondisi
+01531,Laporan Surveyor / Certificate Of Inspection
+01532,IT Cakram Optik / IT Non Cakram Optik
+01534,IP B2 /SPI B2
+01535,IP / IT / SPI Nitrocelulose
+01536,IP Beras / SPI Beras
+01537,Certificate Of Inspection
+01555,Surat Keterangan Label berbahasa Indonesia
+01557,SPI TPT
+01558,SPI Batik dan Motif Batik
+01560,"PI Besi atau Baja, Baja Paduan, dan Produk Turunannya"
+01601,PI Holtikultura
+01602,IP Holtikultura
+01603,IT Holtikultura
+01604,IP / IT / SPI Holtikultura
+01605,"IT Telepon Seluler, Komputer Genggam (Handheld) dan Komputer Tablet"
+01606,"PI Telepon Seluler, Komputer Genggam (Handheld) dan Komputer Tablet"
+01607,IT Hewan dan Produk Hewan
+01608,PI Hewan dan Produk Hewan
+01609,IT Kedelai
+01610,PI Kedelai
+01611,IP Semen
+01612,IT Semen
+01613,PI Semen
+01614,PPI Semen
+01615,IT Baja Paduan
+01616,PI Baja Paduan
+01619,IP Baja Paduan
+01621,IT Bahan Baku Plastik
+01623,Izin Tipe UTTP
+01627,IP/PI/SPI Ban
+01690,IP / IT / PI / PPI Semen
+01800,API-U / API-P
+01803,Laporan Surveyor / Certificate Of Inspection / API-P
+02001,Karantina Ikan KID 7
+02003,Karantina Ikan KID 3
+02015,Karantina Ikan KID 15
+02946,Karantina Ikan KID 3
+02947,Karantina Ikan KID 5
+02999,"KI-D3, KI-D12, atau KI-D15"
+03004,Karantina Hewan KH 4
+03005,Karantina Hewan KH 5
+03007,Karantina Hewan KH 7
+03012,Karantina Hewan KH 12
+03999,"KH.4, KH.5, KH.7,KH.8a, KH.8b, KH.8c, KH.9, KH.10,KH.11 atau KH.12"
+04001,KT 9 - Sertifikat Pelepasan
+04007,SP 7 - Surat Pemberitahuan Tidak Perlu Tindakan Karantina Tumbuhan
+04016,KT 2 - Surat Persetujuan Pelaksanaan Tindakan
+04019,KT 2 - Surat Persetujuan Pelaksanaan Tindakan
+04942,KT.2 atau KT.9
+05854,Surat Keterangan Impor
+05855,Surat Keterangan Komoditas Non Obat dan Makanan
+05856,Surat Keterangan Impor/Surat Keterangan Komoditas Non Obat dan Makanan
+05857,Surat Keterangan Impor / Special Access Scheme (SAS)
+06001,Nomor Pendaftaran Alat Kesehatan
+06002,Laporan Surveyor
+06006,SPI Narkotika
+06007,SPI Psikotropika
+06008,Nomor Pendaftaran PKRT
+06091,SPI-Prekursor Farmasi
+06999,"Izin Edar Alat Kesehatan, Alat Kesehatan Diagnostik In Vitro, dan PKRT"
+07001,Fasilitas Pertambangan
+08001,Persetujuan Impor bahan nuklir dari BAPETEN
+08002,Persetujuan Impor Sumber radiasi pengion dari BAPETEN
+09001,Formulir Pemberitahuan kepada BI/PPATK
+09003,Persetujuan Pembawaan UKA
+10001,Ijin Impor dari Dep. Kebudayaan dan Pariwisata
+11001,SATS LN dari DepHut dan Izin CITES dari negara pengekspor.
+12001,Sertifikasi
+13001,SNI Gula Kristal Mentah
+13002,Wajib izin impor dari Departemen Pertanian
+13003,Wajib Izin dan/atau Pendaftaran Pestisida dari Menteri Pertanian
+13604,Rekomendasi Impor Produk Holtikultura
+14001,Sertifikat Produk Penggunaan Tanda SNI
+14003,Pengecualian SNI
+14210,Rekomendasi IP Tekstil
+15001,Wajib Izin Impor dari POLRI
+16000,Dilarang
+16001,Surat Keterangan Registrasi Bahan Berbahaya dan Beracun (B3)
+17001,SNI
+17002,Nomor Pelumas Terdaftar
+17003,Ijin Usaha Niaga Umum/Ijin Usaha Niaga Terbatas
+17004,Izin pencantuman tanda SKEM dan Label Tanda Hemat Energi/Rekomendasi pengiriman sampel uji Piranti Pengkondisi Udara
+21001,Nomor Pendaftaran Obat Ikan
+22002,BP Kawasan Batam
+22009,IT Cakram Optik
+22013,IP Plastik
+22016,IP Cakram Optik
+22049,IT Kendaraan Bermotor
+22215,IP Garam Industri
+22306,IT Garam Yodium
+22308,IT Mesin Multi Fungsi Berwarna
+22309,IT Minuman Beralkohol
+22519,Alas Kaki
+22520,Elektronik
+22521,Mainan Anak-anak
+22522,Garment/Pakaian jadi
+22523,Makanan dan Minuman
+22603,IT Hortikultura
+22701,IT Alat Mesin dan Pertanian
+22850,Kosmetik (Kecantikan)
+22851,Obat Tradisionil
+23001,Ijin BKPM

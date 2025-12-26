@@ -46,6 +46,7 @@
                     {
                         <th>Employee ID</th>
                         <th>Nama</th>
+                        <th>Unit</th>
                         <th>Bagian</th>
                     }
                     <th>Jumlah Aktivitas</th>
@@ -66,6 +67,7 @@
                             {
                                 <td>@item.EmployeeID</td>
                                 <td>@item.Nama</td>
+                                <td>@item.Unit</td>
                                 <td>@item.Bagian</td>
                             }
                             <td>@item.JumlahAktivitas</td>
@@ -140,13 +142,14 @@
         }
 
         var grouped = await query
-            .GroupBy(x => new { x.UserID, x.Tanggal, x.User!.EmployeeID, x.User.Nama, x.User.Bagian })
+            .GroupBy(x => new { x.UserID, x.Tanggal, x.User!.EmployeeID, x.User.Nama, x.User.Unit,  x.User.Bagian })
             .Select(g => new ActivitySummary
             {
                 UserID = g.Key.UserID,
                 Tanggal = g.Key.Tanggal,
                 EmployeeID = g.Key.EmployeeID ?? "",
                 Nama = g.Key.Nama ?? "",
+                Unit = g.Key.Unit ?? "",
                 Bagian = g.Key.Bagian ?? "",
                 JumlahAktivitas = g.Count(),
                 TotalDurasi = g.Sum(x => x.DurasiMenit)
@@ -172,6 +175,7 @@
                 x.Tanggal.ToString("dd/MM/yyyy").Contains(term) ||
                 x.EmployeeID.ToLower().Contains(term) ||
                 x.Nama.ToLower().Contains(term) ||
+                x.Unit.ToLower().Contains(term) ||
                 x.Bagian.ToLower().Contains(term));
         }
 
@@ -243,6 +247,7 @@
         public DateOnly Tanggal { get; set; }
         public string EmployeeID { get; set; } = "";
         public string Nama { get; set; } = "";
+        public string Unit { get; set; } = "";
         public string Bagian { get; set; } = "";
         public int JumlahAktivitas { get; set; }
         public int TotalDurasi { get; set; }

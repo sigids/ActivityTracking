@@ -4,6 +4,7 @@ using ActivityTracking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ActivityTracking.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215151724_addstaffjamker")]
+    partial class addstaffjamker
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,7 +111,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("ActivityLogs", (string)null);
+                    b.ToTable("ActivityLogs");
                 });
 
             modelBuilder.Entity("ActivityTracking.Data.ActivityLogFile", b =>
@@ -151,7 +154,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasIndex("LogID");
 
-                    b.ToTable("ActivityLogFiles", (string)null);
+                    b.ToTable("ActivityLogFiles");
                 });
 
             modelBuilder.Entity("ActivityTracking.Data.ApplicationUser", b =>
@@ -274,7 +277,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("AktivitasID");
 
-                    b.ToTable("MasterActivities", (string)null);
+                    b.ToTable("MasterActivities");
 
                     b.HasData(
                         new
@@ -327,7 +330,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("ApplicationID");
 
-                    b.ToTable("MasterApplications", (string)null);
+                    b.ToTable("MasterApplications");
 
                     b.HasData(
                         new
@@ -374,7 +377,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("AsalDokID");
 
-                    b.ToTable("MasterAsalDoks", (string)null);
+                    b.ToTable("MasterAsalDoks");
 
                     b.HasData(
                         new
@@ -433,7 +436,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("BagianID");
 
-                    b.ToTable("MasterBagians", (string)null);
+                    b.ToTable("MasterBagians");
 
                     b.HasData(
                         new
@@ -474,7 +477,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("ComputerID");
 
-                    b.ToTable("MasterComputers", (string)null);
+                    b.ToTable("MasterComputers");
 
                     b.HasData(
                         new
@@ -527,7 +530,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("FrequencyID");
 
-                    b.ToTable("MasterFrequencies", (string)null);
+                    b.ToTable("MasterFrequencies");
 
                     b.HasData(
                         new
@@ -580,7 +583,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("JabatanID");
 
-                    b.ToTable("MasterJabatans", (string)null);
+                    b.ToTable("MasterJabatans");
 
                     b.HasData(
                         new
@@ -621,7 +624,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("JenisDokID");
 
-                    b.ToTable("MasterJenisDoks", (string)null);
+                    b.ToTable("MasterJenisDoks");
 
                     b.HasData(
                         new
@@ -686,7 +689,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("PenggunaID");
 
-                    b.ToTable("MasterPenggunas", (string)null);
+                    b.ToTable("MasterPenggunas");
 
                     b.HasData(
                         new
@@ -727,7 +730,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("UnitID");
 
-                    b.ToTable("MasterUnits", (string)null);
+                    b.ToTable("MasterUnits");
 
                     b.HasData(
                         new
@@ -768,7 +771,7 @@ namespace ActivityTracking.Migrations
 
                     b.HasKey("MethodID");
 
-                    b.ToTable("MasterWorkMethods", (string)null);
+                    b.ToTable("MasterWorkMethods");
 
                     b.HasData(
                         new
@@ -836,7 +839,7 @@ namespace ActivityTracking.Migrations
                     b.HasIndex("UserId", "Tanggal")
                         .IsUnique();
 
-                    b.ToTable("StaffJamKerjas", (string)null);
+                    b.ToTable("StaffJamKerjas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
