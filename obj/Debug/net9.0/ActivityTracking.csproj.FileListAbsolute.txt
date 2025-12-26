@@ -156,7 +156,6 @@ C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\rjsmcs
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\scopedcss\Components\Layout\MainLayout.razor.rz.scp.css
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\scopedcss\bundle\ActivityTracking.styles.css
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\scopedcss\projectbundle\ActivityTracking.bundle.scp.css
-C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\f5znyzhb85-qzzhr941cm.gz
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\oyl75by7kh-4ao0uaefw9.gz
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\zektbwmdxy-4ao0uaefw9.gz
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\staticwebassets.build.json
@@ -172,3 +171,4 @@ C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ref\Ac
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\usiv06gwzk-9oc9l2hova.gz
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\q634j7gp6n-ysr6n3ed8s.gz
 C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\ActivityTracking.sourcelink.json
+C:\APPS-DEV\ASPNETCORE\ActivityTracking\ActivityTracking\obj\Debug\net9.0\compressed\f5znyzhb85-lajznpes2e.gz

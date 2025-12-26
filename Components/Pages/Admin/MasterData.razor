@@ -150,6 +150,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Nama Metode</th>
+                    <th>Komputerise</th>
                     <th>Status</th>
                     <th>Aksi</th>
                 </tr>
@@ -171,6 +172,17 @@
                                     @item.NamaMetode
                                 }
                             </td>
+                            <td>@(item.Computerize ? "Ya" : "Tidak")</td>
+                            @* <td>
+                                @if (editingMethodId == item.MethodID)
+                                {
+                                    <input type="text" @bind="editComputerize" class="form-control" />
+                                }
+                                else
+                                {
+                                    @item.Computerize
+                                }
+                            </td> *@
                             <td>@(item.IsActive ? "Aktif" : "Nonaktif")</td>
                             <td>
                                 @if (editingMethodId == item.MethodID)
@@ -644,6 +656,7 @@
     private string editActivityName = "";
     private string editFrequencyName = "";
     private string editMethodName = "";
+    private bool editComputerize = false;
     private string editAppName = "";
     private string editJabatanName = "";
     private string editBagianName = "";
@@ -780,11 +793,13 @@
     {
         editingMethodId = item.MethodID;
         editMethodName = item.NamaMetode;
+        editComputerize = item.Computerize;
     }
 
     private async Task SaveMethod(MasterWorkMethod item)
     {
         item.NamaMetode = editMethodName;
+        item.Computerize = editComputerize;
         await DbContext.SaveChangesAsync();
         editingMethodId = null;
         message = "Metode kerja berhasil diupdate";

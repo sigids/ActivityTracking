@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using ActivityTracking.Data
+@using System.Text
 @using System.Security.Claims
 
 @attribute [Authorize]
@@ -37,6 +38,32 @@
                 }
             </select>
         </div>
+            <div class="filter-item">
+                <label>Bagian:</label>
+                <select @bind="selectedBagian" class="form-control">
+                    <option value="">-- Semua Bagian --</option>
+                    @if (bagianList != null)
+                    {
+                        @foreach (var b in bagianList)
+                        {
+                            <option value="@b">@b</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Unit:</label>
+                <select @bind="selectedUnit" class="form-control">
+                    <option value="">-- Semua Unit --</option>
+                    @if (unitList != null)
+                    {
+                        @foreach (var u in unitList)
+                        {
+                            <option value="@u">@u</option>
+                        }
+                    }
+                </select>
+            </div>
         <div class="filter-item">
             <label>Dari Tanggal:</label>
             <input type="date" @bind="startDate" class="form-control" />
@@ -46,9 +73,70 @@
             <input type="date" @bind="endDate" class="form-control" />
         </div>
         <div class="filter-item">
-            <button class="btn btn-primary" @onclick="LoadData">Tampilkan</button>
+            <button class="btn btn-primary" @onclick="ApplyFilters">Tampilkan</button>
             <button class="btn btn-secondary ms-2" @onclick="PrintReport">🖨️ Cetak</button>
+            <button class="btn btn-success ms-2" @onclick="ExportCsv">📥 Export CSV</button>
         </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <h3>Summary KPI (Tabel)</h3>
+    <div class="table-responsive">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>EmployeeID</th>
+                    <th>Nama</th>
+                    <th>Bagian</th>
+                    <th>Unit</th>
+                    <th>Total Waktu Aktivitas (jam)</th>
+                    <th>Total Jam Kerja (jam)</th>
+                    <th>Total Aktivitas</th>
+                    <th>Aktivitas Berulang</th>
+                    <th>Aktivitas Komputerisasi</th>
+                    <th>Aktivitas Manual</th>
+                    <th>Aktivitas Paling Banyak</th>
+                    <th>KPI1 % Waktu Efektif</th>
+                    <th>KPI2 % Rasio Manual/Komp</th>
+                    <th>KPI3 % Aktivitas Berulang</th>
+                    <th>KPI4 % Pembuatan Laporan</th>
+                    <th>KPI5 % Pemanfaatan Komputer</th>
+                    <th>KPI6 Variasi Beban (StdDev)</th>
+                    <th>KPI7 % Penggunaan DTS</th>
+                    <th>KPI8 % Penggunaan Stage/Proman</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (summaryTable != null)
+                {
+                    @foreach (var r in summaryTable)
+                    {
+                        <tr>
+                            <td>@r.EmployeeID</td>
+                            <td>@r.Nama</td>
+                            <td>@r.Bagian</td>
+                            <td>@r.Unit</td>
+                            <td>@r.TotalWaktuAktivitasJam.ToString("F2")</td>
+                            <td>@r.TotalJamKerja.ToString("F2")</td>
+                            <td>@r.TotalAktivitas</td>
+                            <td>@r.AktivitasBerulang</td>
+                            <td>@r.AktivitasKomputerisasi</td>
+                            <td>@r.AktivitasManual</td>
+                            <td>@r.AktivitasPalingBanyak</td>
+                            <td>@r.Kpi1WaktuEfektif.ToString("F1")%</td>
+                            <td>@r.Kpi2RasioManualKomputerisasi.ToString("F1")%</td>
+                            <td>@r.Kpi3AktivitasBerulang.ToString("F1")%</td>
+                            <td>@r.Kpi4PembuatanLaporan.ToString("F1")%</td>
+                            <td>@r.Kpi5PemanfaatanKomputer.ToString("F1")%</td>
+                            <td>@r.Kpi6VariasiBebanKerja.ToString("F2")</td>
+                            <td>@r.Kpi7PenggunaanDTS.ToString("F1")%</td>
+                            <td>@r.Kpi8PenggunaanStageProman.ToString("F1")%</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -311,6 +399,11 @@ else
     private ApplicationUser? currentUser;
 
     private List<ApplicationUser>? employees;
+    private string? selectedBagian;
+    private string? selectedUnit;
+    private List<string>? bagianList;
+    private List<string>? unitList;
+    private List<SummaryRow>? summaryTable;
 
     // Summary Data
     private double totalWaktuAktivitas;
@@ -368,6 +461,23 @@ else
             selectedEmployeeId = EmployeeId;
             await LoadData();
         }
+        else
+        {
+            // load bagian and unit lists for filters
+            bagianList = await DbContext.Users
+                .Where(u => !string.IsNullOrEmpty(u.Bagian))
+                .Select(u => u.Bagian ?? string.Empty)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            unitList = await DbContext.Users
+                .Where(u => !string.IsNullOrEmpty(u.Unit))
+                .Select(u => u.Unit ?? string.Empty)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+        }
     }
 
     private async Task LoadData()
@@ -391,6 +501,10 @@ else
             return;
         }
 
+    
+
+    
+
         // Load activity logs for the employee
         var logs = await DbContext.ActivityLogs
             .Include(x => x.Aktivitas)
@@ -408,9 +522,9 @@ else
         // Aktivitas berulang (bukan Insidentil - FrequencyID 5)
         totalAktivitasBerulang = logs.Count(x => x.FrekuensiID != 5);
         
-        // Aktivitas komputerisasi (Sistem Aplikasi - MethodID 4)
-        totalAktivitasKomputerisasi = logs.Count(x => x.MetodeKerjaID == 4);
-        totalAktivitasManual = logs.Count(x => x.MetodeKerjaID != 4);
+        // Aktivitas komputerisasi/manual berdasarkan flag MasterWorkMethod.Computerize
+        totalAktivitasKomputerisasi = logs.Count(x => x.MetodeKerja != null && x.MetodeKerja.Computerize);
+        totalAktivitasManual = logs.Count(x => x.MetodeKerja == null || !x.MetodeKerja.Computerize);
 
         // Aktivitas paling banyak
         var mostCommon = logs.Where(x => x.Aktivitas != null)
@@ -456,7 +570,7 @@ else
             ? ((double)dtsCount / totalAktivitas) * 100 : 0;
 
         // KPI 8: % Penggunaan Stage/Proman (ApplicationID 2)
-        int stagePromanCount = logs.Count(x => x.AplikasiID == 2);
+        int stagePromanCount = logs.Count(x => x.AplikasiID == 2 || x.AplikasiID == 3 || x.AplikasiID == 5);
         kpi8PenggunaanStageProman = totalAktivitas > 0 
             ? ((double)stagePromanCount / totalAktivitas) * 100 : 0;
 
@@ -516,7 +630,182 @@ else
         await JSRuntime.InvokeVoidAsync("print");
     }
 
-    private class ActivitySummaryItem
+    private async Task ExportCsv()
+    {
+        if (summaryTable == null || summaryTable.Count == 0)
+        {
+            return;
+        }
+
+        // Generate CSV content
+        var csvContent = new StringBuilder();
+        
+        // Header
+        csvContent.AppendLine("EmployeeID,Nama,Bagian,Unit,Total Waktu Aktivitas (jam),Total Jam Kerja (jam),Total Aktivitas,Aktivitas Berulang,Aktivitas Komputerisasi,Aktivitas Manual,Aktivitas Paling Banyak,KPI1 % Waktu Efektif,KPI2 % Rasio Manual/Komp,KPI3 % Aktivitas Berulang,KPI4 % Pembuatan Laporan,KPI5 % Pemanfaatan Komputer,KPI6 Variasi Beban (StdDev),KPI7 % Penggunaan DTS,KPI8 % Penggunaan Stage/Proman");
+        
+        // Data rows
+        foreach (var row in summaryTable)
+        {
+            var csvRow = new List<string>
+            {
+                EscapeCsv(row.EmployeeID),
+                EscapeCsv(row.Nama),
+                EscapeCsv(row.Bagian),
+                EscapeCsv(row.Unit),
+                row.TotalWaktuAktivitasJam.ToString("F2"),
+                row.TotalJamKerja.ToString("F2"),
+                row.TotalAktivitas.ToString(),
+                row.AktivitasBerulang.ToString(),
+                row.AktivitasKomputerisasi.ToString(),
+                row.AktivitasManual.ToString(),
+                EscapeCsv(row.AktivitasPalingBanyak),
+                row.Kpi1WaktuEfektif.ToString("F1"),
+                row.Kpi2RasioManualKomputerisasi.ToString("F1"),
+                row.Kpi3AktivitasBerulang.ToString("F1"),
+                row.Kpi4PembuatanLaporan.ToString("F1"),
+                row.Kpi5PemanfaatanKomputer.ToString("F1"),
+                row.Kpi6VariasiBebanKerja.ToString("F2"),
+                row.Kpi7PenggunaanDTS.ToString("F1"),
+                row.Kpi8PenggunaanStageProman.ToString("F1")
+            };
+            csvContent.AppendLine(string.Join(",", csvRow));
+        }
+
+        // Trigger download
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());
+        var base64 = Convert.ToBase64String(bytes);
+        var fileName = $"KPI_Summary_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        
+        await JSRuntime.InvokeVoidAsync("downloadFile", base64, fileName, "text/csv");
+    }
+
+    private string EscapeCsv(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "";
+        
+        // If value contains comma, quote, or newline, wrap in quotes and escape quotes
+        if (value.Contains(",") || value.Contains("\"") || value.Contains("\n"))
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    private async Task LoadSummaryTable()
+    {
+        // Build user query according to filters
+        var usersQuery = DbContext.Users.Where(u => u.Role == "Staff" && !string.IsNullOrEmpty(u.EmployeeID));
+
+        if (!string.IsNullOrEmpty(selectedBagian))
+            usersQuery = usersQuery.Where(u => u.Bagian == selectedBagian);
+
+        if (!string.IsNullOrEmpty(selectedUnit))
+            usersQuery = usersQuery.Where(u => u.Unit == selectedUnit);
+
+        if (!string.IsNullOrEmpty(selectedEmployeeId))
+            usersQuery = usersQuery.Where(u => u.EmployeeID == selectedEmployeeId);
+
+        if (!isAdmin && currentUser != null)
+            usersQuery = usersQuery.Where(u => u.Id == currentUser.Id);
+
+        var users = await usersQuery.OrderBy(u => u.EmployeeID).ToListAsync();
+        var userIds = users.Select(u => u.Id).ToList();
+
+        var logs = await DbContext.ActivityLogs
+            .Include(x => x.Aktivitas)
+            .Include(x => x.Frekuensi)
+            .Include(x => x.MetodeKerja)
+            .Include(x => x.Aplikasi)
+            .Where(x => userIds.Contains(x.UserID) && x.Tanggal >= startDate && x.Tanggal <= endDate)
+            .ToListAsync();
+
+        var jamkerjaList = await DbContext.StaffJamKerjas
+            .Where(j => userIds.Contains(j.UserId) && j.Tanggal >= startDate && j.Tanggal <= endDate)
+            .ToListAsync();
+
+        summaryTable = new List<SummaryRow>();
+
+        foreach (var u in users)
+        {
+            var userLogs = logs.Where(x => x.UserID == u.Id).ToList();
+            var userJamKerja = jamkerjaList.Where(j => j.UserId == u.Id).ToList();
+
+            int totalAkt = userLogs.Count;
+            int totalDurasi = userLogs.Sum(x => x.DurasiMenit);
+            double totalWaktuJam = totalDurasi / 60.0;
+            double totalJamKerjaUser = (double)userJamKerja.Sum(j => j.JamKerja);
+            int aktivitasBerulang = userLogs.Count(x => x.FrekuensiID != 5);
+            int aktivitasKomputer = userLogs.Count(x => x.MetodeKerja != null && x.MetodeKerja.Computerize);
+            int aktivitasManual = totalAkt - aktivitasKomputer;
+
+            // KPI calculations per user
+            double kpi1 = totalJamKerjaUser > 0 ? (totalWaktuJam / totalJamKerjaUser) * 100 : 0;
+            double kpi2 = aktivitasKomputer > 0 ? ((double)aktivitasManual / aktivitasKomputer) * 100 : 0;
+            double kpi3 = totalAkt > 0 ? ((double)aktivitasBerulang / totalAkt) * 100 : 0;
+            int laporanCountUser = userLogs.Count(x => x.AktivitasID == 4);
+            double kpi4 = totalAkt > 0 ? ((double)laporanCountUser / totalAkt) * 100 : 0;
+            double totalMenitAktivitasUser = totalDurasi;
+            double kpi5 = (totalJamKerjaUser * 60) > 0 ? (totalMenitAktivitasUser / (totalJamKerjaUser * 60)) * 100 : 0;
+
+            // KPI6: stddev of daily hours for this user
+            var dailyHours = userLogs.GroupBy(x => x.Tanggal)
+                .Select(g => g.Sum(x => x.DurasiMenit) / 60.0)
+                .ToList();
+            double kpi6 = CalculateStdDev(dailyHours);
+
+            int dtsCountUser = userLogs.Count(x => x.AplikasiID == 1);
+            double kpi7 = totalAkt > 0 ? ((double)dtsCountUser / totalAkt) * 100 : 0;
+
+            int stagePromanCountUser = userLogs.Count(x => x.AplikasiID == 2 || x.AplikasiID == 3 || x.AplikasiID == 5);
+            double kpi8 = totalAkt > 0 ? ((double)stagePromanCountUser / totalAkt) * 100 : 0;
+
+            var most = userLogs.Where(x => x.Aktivitas != null)
+                .GroupBy(x => x.Aktivitas!.NamaAktivitas)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault();
+
+            string mostName = most?.Key ?? "-";
+
+            summaryTable.Add(new SummaryRow
+            {
+                EmployeeID = u.EmployeeID ?? "",
+                Nama = u.Nama ?? "",
+                Bagian = u.Bagian ?? "",
+                Unit = u.Unit ?? "",
+                TotalWaktuAktivitasJam = totalWaktuJam,
+                TotalJamKerja = totalJamKerjaUser,
+                TotalAktivitas = totalAkt,
+                AktivitasBerulang = aktivitasBerulang,
+                AktivitasKomputerisasi = aktivitasKomputer,
+                AktivitasManual = aktivitasManual,
+                AktivitasPalingBanyak = mostName,
+                Kpi1WaktuEfektif = kpi1,
+                Kpi2RasioManualKomputerisasi = kpi2,
+                Kpi3AktivitasBerulang = kpi3,
+                Kpi4PembuatanLaporan = kpi4,
+                Kpi5PemanfaatanKomputer = kpi5,
+                Kpi6VariasiBebanKerja = kpi6,
+                Kpi7PenggunaanDTS = kpi7,
+                Kpi8PenggunaanStageProman = kpi8
+            });
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadSummaryTable();
+        if (!string.IsNullOrEmpty(selectedEmployeeId))
+        {
+            await LoadData();
+        }
+        else
+        {
+            selectedEmployee = null;
+        }
+    }
+
+    public class ActivitySummaryItem
     {
         public string NamaAktivitas { get; set; } = "";
         public int Count { get; set; }
@@ -524,7 +813,7 @@ else
         public double AvgDurasi { get; set; }
     }
 
-    private class ApplicationSummaryItem
+    public class ApplicationSummaryItem
     {
         public string NamaAplikasi { get; set; } = "";
         public int Count { get; set; }
@@ -532,12 +821,44 @@ else
         public double Percentage { get; set; }
     }
 
-    private class DailySummaryItem
+    public class DailySummaryItem
     {
         public DateOnly Tanggal { get; set; }
         public double JamKerja { get; set; }
         public int JumlahAktivitas { get; set; }
         public int TotalDurasi { get; set; }
         public double PersentaseEfektif { get; set; }
+    }
+
+    public class SummaryRow
+    {
+        public string EmployeeID { get; set; } = "";
+        public string Nama { get; set; } = "";
+        public string Bagian { get; set; } = "";
+        public string Unit { get; set; } = "";
+        public double TotalWaktuAktivitasJam { get; set; }
+        public double TotalJamKerja { get; set; }
+        public int TotalAktivitas { get; set; }
+        public int AktivitasBerulang { get; set; }
+        public int AktivitasKomputerisasi { get; set; }
+        public int AktivitasManual { get; set; }
+        public string AktivitasPalingBanyak { get; set; } = "-";
+        // KPI values per employee
+        public double Kpi1WaktuEfektif { get; set; }
+        public double Kpi2RasioManualKomputerisasi { get; set; }
+        public double Kpi3AktivitasBerulang { get; set; }
+        public double Kpi4PembuatanLaporan { get; set; }
+        public double Kpi5PemanfaatanKomputer { get; set; }
+        public double Kpi6VariasiBebanKerja { get; set; }
+        public double Kpi7PenggunaanDTS { get; set; }
+        public double Kpi8PenggunaanStageProman { get; set; }
+    }
+
+    private double CalculateStdDev(List<double> values)
+    {
+        if (values == null || values.Count < 2) return 0;
+        double avg = values.Average();
+        double sumSquares = values.Sum(v => Math.Pow(v - avg, 2));
+        return Math.Sqrt(sumSquares / values.Count);
     }
 }

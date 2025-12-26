@@ -13,6 +13,9 @@ namespace ActivityTracking.Data
 
         public bool IsActive { get; set; } = true;
 
+        // Indicates whether this work method is computerized (true) or manual (false)
+        public bool Computerize { get; set; } = false;
+
         public virtual ICollection<ActivityLog>? ActivityLogs { get; set; }
     }
 }

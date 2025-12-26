@@ -280,9 +280,9 @@
         // Aktivitas berulang (bukan Insidentil - FrequencyID 5)
         totalAktivitasBerulang = logs.Count(x => x.FrekuensiID != 5);
         
-        // Aktivitas komputerisasi (Sistem Aplikasi - MethodID 4)
-        totalAktivitasKomputerisasi = logs.Count(x => x.MetodeKerjaID == 4);
-        totalAktivitasManual = logs.Count(x => x.MetodeKerjaID != 4);
+        // Aktivitas komputerisasi/manual berdasarkan flag MasterWorkMethod.Computerize
+        totalAktivitasKomputerisasi = logs.Count(x => x.MetodeKerja != null && x.MetodeKerja.Computerize);
+        totalAktivitasManual = logs.Count(x => x.MetodeKerja == null || !x.MetodeKerja.Computerize);
 
         // Aktivitas paling banyak
         var mostCommon = logs.Where(x => x.Aktivitas != null)
@@ -352,7 +352,7 @@
             ? ((double)dtsCount / totalAktivitas) * 100 : 0;
 
         // KPI 8: % Penggunaan Stage/Proman (ApplicationID 2)
-        int stagePromanCount = logs.Count(x => x.AplikasiID == 2);
+        int stagePromanCount = logs.Count(x => x.AplikasiID == 2 || x.AplikasiID == 3 || x.AplikasiID == 5);
         kpi8PenggunaanStageProman = totalAktivitas > 0 
             ? ((double)stagePromanCount / totalAktivitas) * 100 : 0;
 

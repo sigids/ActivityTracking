@@ -42,11 +42,11 @@ namespace ActivityTracking.Data
             );
 
             builder.Entity<MasterWorkMethod>().HasData(
-                new MasterWorkMethod { MethodID = 1, NamaMetode = "Tulis Tangan" },
-                new MasterWorkMethod { MethodID = 2, NamaMetode = "Non Sistem Aplikasi" },
-                new MasterWorkMethod { MethodID = 3, NamaMetode = "Email" },
-                new MasterWorkMethod { MethodID = 4, NamaMetode = "Sistem Aplikasi" },
-                new MasterWorkMethod { MethodID = 5, NamaMetode = "Print" }
+                new MasterWorkMethod { MethodID = 1, NamaMetode = "Tulis Tangan", Computerize = false },
+                new MasterWorkMethod { MethodID = 2, NamaMetode = "Non Sistem Aplikasi", Computerize = true },
+                new MasterWorkMethod { MethodID = 3, NamaMetode = "Email", Computerize = true },
+                new MasterWorkMethod { MethodID = 4, NamaMetode = "Sistem Aplikasi", Computerize = true },
+                new MasterWorkMethod { MethodID = 5, NamaMetode = "Print", Computerize = true }
             );
 
             builder.Entity<MasterApplication>().HasData(
